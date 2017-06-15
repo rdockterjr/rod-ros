@@ -1,0 +1,3 @@
+<launch>
+  <node name="gazebo" pkg="gazebo_ros" type="gazebo" args="worlds/pioneer2dx.world" respawn="false" output="screen"/>
+</launch>

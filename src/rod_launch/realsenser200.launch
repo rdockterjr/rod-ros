@@ -1,0 +1,52 @@
+<launch>
+
+	<!-- Launches Realsense camera node -->
+	<param name="camera/driver/mode"			type="str"  value="manual" />
+  <param name="cameradriver/color_fps"  type="int"  value="30" />
+ 
+  <group ns="camera">
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
+
+    <include file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"      value="nodelet_manager" />
+      <arg name="camera"       value="camera" />
+      <arg name="camera_type"  value="R200" />
+      <arg name="serial_no"    value="" />
+      <arg name="usb_port_id"  value="" />
+			<arg name="depth"                     value="depth" />
+      <arg name="rgb"                       value="rgb" />
+      <arg name="ir"                        value="ir" />
+      <arg name="publish_tf"                value="true" />
+      <arg name="mode"                      value="manual" />
+      <arg name="depth_width"               value="480" />
+      <arg name="depth_height"              value="360" />
+      <arg name="color_width"               value="640" />
+      <arg name="color_height"              value="480" />
+      <arg name="depth_fps"                 value="30" />
+      <arg name="color_fps"                 value="30" />
+    </include>
+
+		<include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+      <arg name="manager"                         value="camera_nodelet_manager" />
+      <arg name="rgb"                             value="rgb" />
+      <arg name="ir"                              value="ir" />
+      <arg name="depth"                           value="depth" />
+      <arg name="depth_registered"                value="depth_registered" />
+      <arg name="projector"                       value="projector" />
+      <arg name="respawn"                         value="false" />
+      <arg name="rgb_processing"                  value="true" />
+      <arg name="ir_processing"                   value="true" />
+      <arg name="depth_processing"                value="true" />
+      <arg name="depth_registered_processing"     value="true" />
+      <arg name="disparity_processing"            value="true" />
+      <arg name="disparity_registered_processing" value="true" />
+      <arg name="hw_registered_processing"        value="false" />
+      <arg name="sw_registered_processing"        value="true" />
+    </include>
+
+  </group>
+
+	<!--
+  <node pkg="cv_image_filter" type="depthimage_filter" name="depthimage_filter" output="screen"/>
+    -->
+</launch>
