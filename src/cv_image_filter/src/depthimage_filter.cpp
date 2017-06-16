@@ -24,7 +24,10 @@ cv::Mat inputimage, scaledimage;
 cv_bridge::CvImagePtr cv_ptr_raw;
 
 bool firsttime = true;
+//https://www.intel.com/content/dam/support/us/en/documents/emerging-technologies/intel-realsense-technology/realsense-camera-r200-datasheet.pdf
 
+#define h_fov 1.22173 //70 degrees
+#define v_fov 0.750492 //43 degrees
 #define num_readings 480 //image is 480 x 360
 int midcol = 180; //360 / 2;
 double laser_frequency = 40;
@@ -78,21 +81,18 @@ void rawImageCallback(const sensor_msgs::Image::ConstPtr& raw_image_msg){
 			std::cout << "image size: " << inputimage.cols << ", " << inputimage.rows << "\n";
 		}
 
-		//scale it
-		scaledimage = cv::Mat::zeros(inputimage.size(), CV_8UC1);
-		scaledimage = scaleDepth(inputimage);
 
 		//populate the LaserScan message
 		ros::Time scan_time = ros::Time::now();
 		sensor_msgs::LaserScan scan;
 		scan.header.stamp = scan_time;
-		scan.header.frame_id = "laser_frame";
-		scan.angle_min = -1.02/2.0; //59 degree cone
-		scan.angle_max = 1.02/2.0;
-		scan.angle_increment = 1.02 / num_readings;
-		scan.time_increment = 30.0 / (num_readings);
-		scan.range_min = 500.0;
-		scan.range_max = 3500.0;
+		scan.header.frame_id = raw_image_msg->header.frame_id;
+		scan.angle_min = -h_fov/2.0; //59 degree cone
+		scan.angle_max = h_fov/2.0;
+		scan.angle_increment = h_fov / num_readings;
+		scan.time_increment = (1.0 / 30.0) / num_readings;
+		scan.range_min = 0.0;
+		scan.range_max = 300.0;
 
 		//scan it
 		scan.ranges.resize(num_readings);
@@ -100,11 +100,15 @@ void rawImageCallback(const sensor_msgs::Image::ConstPtr& raw_image_msg){
     for(unsigned int i = 0; i < num_readings; ++i){
 			uchar val = inputimage.at<uchar>(midcol, i);
 			scan.ranges[i] = double(val);
-			scan.intensities[i] = 1;
+			//scan.intensities[i] = 1;
     }
 
 		
     scan_pub.publish(scan);
+
+		//scale it
+		scaledimage = cv::Mat::zeros(inputimage.size(), CV_8UC1);
+		scaledimage = scaleDepth(inputimage);
 
 		//show it for now
     cv::imshow("scaledimage", scaledimage);

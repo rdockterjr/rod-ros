@@ -46,7 +46,7 @@
 
   </group>
 
-	<!--
+	<!-- -->
   <node pkg="cv_image_filter" type="depthimage_filter" name="depthimage_filter" output="screen"/>
-    -->
+    
 </launch>
