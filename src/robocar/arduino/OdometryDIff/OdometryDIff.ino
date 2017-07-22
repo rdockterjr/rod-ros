@@ -51,7 +51,8 @@ float velocity_actual_right = 0.0;
 long oldLeft  = 0;
 long oldRight = 0;
 long newLeft, newRight, diffLeft, diffRight;
-float dt = 1.0; // 1hz
+float dt_s = 0.0; // 1hz
+float dt_ms = 0.0; // 1hz
 unsigned long last_timeL, last_timeR;
 float MotorCommandL,MotorCommandR;
 float Error_Prev_Left, Error_Prev_Right;
@@ -59,12 +60,12 @@ float Error_Now_Left, Error_Now_Right;
 float Setpoint_ActualLeft,Setpoint_ActualRight;
 
 //Specify the ratios and initial tuning parameters
-float Kp = 100.0;
-float Ki = 0.0;
+float Kp = 0.0; //error diff
+float Ki = 100.0; //current error
 float Kd = 0.0;
 int EncPerRev = 1120; //1920; //32 cpr x 35:1 gear ratio
-float EncPerRad;
-float RadPerEncUs;
+float RadPerEnc;
+float s_2_ms = 1.0 / 1000000.0;
 
 //Encoders 
 Encoder EncMotorL(2,4);
@@ -137,6 +138,14 @@ void setMotorPWM(int pwmL, int pwmR)
     dirR = MOTORSTOP;
   }
   setDirection(dirL, dirR);
+  
+//  Serial.print(pwmL);
+//  Serial.print(',');
+//  Serial.print(dirL);
+//  Serial.print(',');
+//  Serial.print(pwmR);
+//  Serial.print(',');
+//  Serial.println(dirR);
 
   //Left Motor pwm
   analogWrite(enA, magL);
@@ -152,19 +161,21 @@ void getVelocity(float &velLeft, float &velRight)
   //Get new values of the wheel encoders
   //get current encoder count and delta time
   newLeft = EncMotorL.read();
-  dt=micros()-last_timeL;
+  dt_ms=micros()-last_timeL;
+  dt_s = dt_ms * s_2_ms;
   last_timeL = micros();
   //get angular velocity
   diffLeft = newLeft - oldLeft;
-  velLeft = (float(diffLeft) / dt) * RadPerEncUs;
+  velLeft = (float(diffLeft) / dt_s) * RadPerEnc;
 
   //get current encoder count and delta time
   newRight = EncMotorR.read();
-  dt=micros()-last_timeR;
+  dt_ms=micros()-last_timeR;
+  dt_s = dt_ms *s_2_ms;
   last_timeR = micros();
   //get angular velocity
   diffRight = newRight - oldRight;
-  velRight= (float(diffRight) / dt) * RadPerEncUs;
+  velRight= (float(diffRight) / dt_s) * RadPerEnc;
   
   //Move the new value into the past
   oldLeft=newLeft;
@@ -184,12 +195,20 @@ void VelocityController()
   Error_Now_Right = Setpoint_ActualRight - velocity_actual_right ;
 
   //velocity PID
-  float changeL = Error_Now_Left*Ki*dt + Kp*(Error_Now_Left-Error_Prev_Left);
-  float changeR = Error_Now_Right*Ki*dt + Kp*(Error_Now_Right-Error_Prev_Right);
+  float changeL = Error_Now_Left*Ki*dt_s + Kp*(Error_Now_Left-Error_Prev_Left);
+  float changeR = Error_Now_Right*Ki*dt_s + Kp*(Error_Now_Right-Error_Prev_Right);
   if(changeL>CHANGE_LIMIT){changeL=CHANGE_LIMIT;}
   if(changeL<-CHANGE_LIMIT){changeL=-CHANGE_LIMIT;}
   if(changeR>CHANGE_LIMIT){changeR=CHANGE_LIMIT;}
   if(changeR<-CHANGE_LIMIT){changeR=-CHANGE_LIMIT;}
+  
+  Serial.print(Error_Now_Left);
+  Serial.print(',');
+  Serial.print(changeL);
+  Serial.print(',');
+  Serial.print(Error_Now_Right);
+  Serial.print(',');
+  Serial.println(changeR);
 
   //Motor commandings in PWM units -255 to +255
   MotorCommandL+=changeL;
@@ -239,8 +258,7 @@ void setup()
   }
   
   // Some maths
-  EncPerRad=(float(EncPerRev)/(2.0*3.14159));
-  RadPerEncUs=(1e6/EncPerRad);
+  RadPerEnc=((2.0*3.14159) / float(EncPerRev));
   
   // set all the motor control pins to outputs
   pinMode(enA, OUTPUT);
@@ -297,7 +315,7 @@ void loop()
   unsigned long current_time = micros();
   unsigned long dt = current_time - last_sent_time;
   last_sent_time = current_time;
-  float tempfdt = float(dt/1000000.f);
+  float tempfdt = float(dt * s_2_ms);
 
   /// Run the controller
   VelocityController();
@@ -322,9 +340,9 @@ void loop()
       //manual
       //setMotorPWM(int(speedfloat), int(speedfloat));
     }
-    Serial.print(velocity_actual_left);
-    Serial.print(',');
-    Serial.println(velocity_actual_right);
+    //Serial.print(velocity_actual_left);
+    //Serial.print(',');
+    //Serial.println(velocity_actual_right);
   }
 
   delay(spin_time_ms);
