@@ -5,7 +5,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int8.h>
 
-#define ROSSERIAL false
+#define ROSSERIAL true
 
 //variables for ros arrays
 #define ARRSIZE 3
@@ -37,7 +37,6 @@ int in3 = 9;
 int in4 = 10;
 
 
-
 //variables for control
 unsigned long last_received_time;
 unsigned long last_sent_time;
@@ -45,15 +44,17 @@ const int spin_time_ms = 10;
 float dirFlipL = 1.0; //because left wheel is backwards
 float dirFlipR = 1.0; // right wheel goes correct direction
 
-//velocity variables
+//velocity and timing variables
 float velocity_actual_left = 0.0;
 float velocity_actual_right = 0.0;
 long oldLeft  = 0;
 long oldRight = 0;
 long newLeft, newRight, diffLeft, diffRight;
-float dt_s = 0.0; // 1hz
-float dt_ms = 0.0; // 1hz
+float dt_s = 0.0; // seconds
+float dt_us = 0.0; // microseconds
 unsigned long last_timeL, last_timeR;
+
+//errors for control loop
 float MotorCommandL,MotorCommandR;
 float Error_Prev_Left, Error_Prev_Right;
 float Error_Now_Left, Error_Now_Right;
@@ -61,11 +62,11 @@ float Setpoint_ActualLeft,Setpoint_ActualRight;
 
 //Specify the ratios and initial tuning parameters
 float Kp = 0.0; //error diff
-float Ki = 100.0; //current error
+float Ki = 10.0; //current error
 float Kd = 0.0;
 int EncPerRev = 1120; //1920; //32 cpr x 35:1 gear ratio
 float RadPerEnc;
-float s_2_ms = 1.0 / 1000000.0;
+float us_2_s = 1.0 / 1000000.0;
 
 //Encoders 
 Encoder EncMotorL(2,4);
@@ -139,14 +140,6 @@ void setMotorPWM(int pwmL, int pwmR)
   }
   setDirection(dirL, dirR);
   
-//  Serial.print(pwmL);
-//  Serial.print(',');
-//  Serial.print(dirL);
-//  Serial.print(',');
-//  Serial.print(pwmR);
-//  Serial.print(',');
-//  Serial.println(dirR);
-
   //Left Motor pwm
   analogWrite(enA, magL);
   
@@ -161,22 +154,22 @@ void getVelocity(float &velLeft, float &velRight)
   //Get new values of the wheel encoders
   //get current encoder count and delta time
   newLeft = EncMotorL.read();
-  dt_ms=micros()-last_timeL;
-  dt_s = dt_ms * s_2_ms;
+  dt_us=micros()-last_timeL;
+  dt_s = dt_us * us_2_s;
   last_timeL = micros();
   //get angular velocity
   diffLeft = newLeft - oldLeft;
-  velLeft = (float(diffLeft) / dt_s) * RadPerEnc;
+  velLeft = (float(diffLeft) * RadPerEnc ) / float(dt_s);
 
   //get current encoder count and delta time
   newRight = EncMotorR.read();
-  dt_ms=micros()-last_timeR;
-  dt_s = dt_ms *s_2_ms;
+  dt_us=micros()-last_timeR;
+  dt_s = dt_us *us_2_s;
   last_timeR = micros();
   //get angular velocity
   diffRight = newRight - oldRight;
-  velRight= (float(diffRight) / dt_s) * RadPerEnc;
-  
+  velRight= (float(diffRight)  * RadPerEnc ) / float(dt_s);
+
   //Move the new value into the past
   oldLeft=newLeft;
   oldRight=newRight;
@@ -201,14 +194,6 @@ void VelocityController()
   if(changeL<-CHANGE_LIMIT){changeL=-CHANGE_LIMIT;}
   if(changeR>CHANGE_LIMIT){changeR=CHANGE_LIMIT;}
   if(changeR<-CHANGE_LIMIT){changeR=-CHANGE_LIMIT;}
-  
-  Serial.print(Error_Now_Left);
-  Serial.print(',');
-  Serial.print(changeL);
-  Serial.print(',');
-  Serial.print(Error_Now_Right);
-  Serial.print(',');
-  Serial.println(changeR);
 
   //Motor commandings in PWM units -255 to +255
   MotorCommandL+=changeL;
@@ -235,6 +220,8 @@ void VelocityController()
 
 //Gets called whenever motor node from ros publishes something
 void cmd_message(const std_msgs::Float32MultiArray& msg){
+  //Below ~9 rad/s wont move at all
+  
   
   //set the wheel velocities (rad/s)
   set_target(msg.data[LEFT],msg.data[RIGHT]);
@@ -258,7 +245,7 @@ void setup()
   }
   
   // Some maths
-  RadPerEnc=((2.0*3.14159) / float(EncPerRev));
+  RadPerEnc=((2.0*M_PI) / float(EncPerRev));
   
   // set all the motor control pins to outputs
   pinMode(enA, OUTPUT);
@@ -315,14 +302,13 @@ void loop()
   unsigned long current_time = micros();
   unsigned long dt = current_time - last_sent_time;
   last_sent_time = current_time;
-  float tempfdt = float(dt * s_2_ms);
-
+  float tempfdt = float(dt * us_2_s);
+  
   /// Run the controller
   VelocityController();
-  //getVelocity(velocity_actual_left, velocity_actual_right);
 
   if(ROSSERIAL){
-    //Send to ROS Node
+    //Send to ROS Node (rad/s)
     Velocity_Out.data[RIGHT] = velocity_actual_right;
     Velocity_Out.data[LEFT ] = velocity_actual_left;
     Velocity_Out.data[TIME] = tempfdt;
@@ -336,13 +322,10 @@ void loop()
       Serial.print("SetPoint: ");
       Serial.println(speedfloat);
       set_target(speedfloat,speedfloat);
-      
-      //manual
-      //setMotorPWM(int(speedfloat), int(speedfloat));
     }
-    //Serial.print(velocity_actual_left);
-    //Serial.print(',');
-    //Serial.println(velocity_actual_right);
+    Serial.print(velocity_actual_left);
+    Serial.print(",");
+    Serial.println(velocity_actual_right);
   }
 
   delay(spin_time_ms);
