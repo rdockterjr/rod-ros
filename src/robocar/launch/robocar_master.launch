@@ -2,15 +2,20 @@
 
 <launch>
 
-	<!-- rosserial node to arduino -->
-  <node pkg="rosserial_python" type="serial_node.py" name="rosserial" output="screen">
-  <param name="port" value="/dev/ttyUSB0" />
-  <param name="baud" value="57600" />
-	</node>
+	<!-- Meta launch file for  all control, sensors , and algorithms-->
 
-	<!-- odom node -->
-  <node pkg="RoboCar" type="diffodom" name="odom_node" output="screen">
-	</node>
+	<!-- Include machine control -->
+	<include file="$(find robocar)/launch/machine_control.launch">
+	</include>
+
+
+	<!-- Include realsense camera -->
+	<include file="$(find robocar)/launch/realsense2scan.launch">
+	</include>
+
+	<!-- Include tf publisher -->
+	<include file="$(find robocar)/launch/robocar_tf.launch">
+	</include>
 
 
 </launch>

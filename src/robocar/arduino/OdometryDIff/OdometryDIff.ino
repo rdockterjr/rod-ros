@@ -1,3 +1,6 @@
+
+#include <ArduinoHardware.h>
+
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/MultiArrayLayout.h>
@@ -60,10 +63,13 @@ float Error_Prev_Left, Error_Prev_Right;
 float Error_Now_Left, Error_Now_Right;
 float Setpoint_ActualLeft,Setpoint_ActualRight;
 
-//Specify the ratios and initial tuning parameters
-float Kp = 0.0; //error diff
-float Ki = 10.0; //current error
-float Kd = 0.0;
+//Specify the ratios and initial tuning parameters, different for each wheel
+float Kp_R = 0.0; //error diff
+float Ki_R = 15.0; //current error
+float Kd_R = 0.0;
+float Kp_L = 0.0; //error diff
+float Ki_L = 10.0; //current error
+float Kd_L = 0.0;
 int EncPerRev = 1120; //1920; //32 cpr x 35:1 gear ratio
 float RadPerEnc;
 float us_2_s = 1.0 / 1000000.0;
@@ -188,8 +194,8 @@ void VelocityController()
   Error_Now_Right = Setpoint_ActualRight - velocity_actual_right ;
 
   //velocity PID
-  float changeL = Error_Now_Left*Ki*dt_s + Kp*(Error_Now_Left-Error_Prev_Left);
-  float changeR = Error_Now_Right*Ki*dt_s + Kp*(Error_Now_Right-Error_Prev_Right);
+  float changeL = Error_Now_Left*Ki_L*dt_s + Kp_L*(Error_Now_Left-Error_Prev_Left);
+  float changeR = Error_Now_Right*Ki_R*dt_s + Kp_R*(Error_Now_Right-Error_Prev_Right);
   if(changeL>CHANGE_LIMIT){changeL=CHANGE_LIMIT;}
   if(changeL<-CHANGE_LIMIT){changeL=-CHANGE_LIMIT;}
   if(changeR>CHANGE_LIMIT){changeR=CHANGE_LIMIT;}
@@ -234,8 +240,8 @@ void cmd_message(const std_msgs::Float32MultiArray& msg){
 std_msgs::Float32MultiArray Velocity_Out;
 //ros node stuff
 ros::NodeHandle nh;
-ros::Publisher pub_actual("velocity_actual", &Velocity_Out);
-ros::Subscriber<std_msgs::Float32MultiArray> sub_cmd("velocity_command", &cmd_message);
+ros::Publisher pub_actual("/velocity_actual", &Velocity_Out);
+ros::Subscriber<std_msgs::Float32MultiArray> sub_cmd("/velocity_command", &cmd_message);
 
 //////////////////////////////Setup//////////////////////////////////////////
 void setup()

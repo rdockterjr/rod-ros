@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- rosserial node to arduino -->
+  <node pkg="rosserial_python" type="serial_node.py" name="rosserial" output="screen">
+  <param name="port" value="/dev/ttyUSB0" />
+  <param name="baud" value="57600" />
+	</node>
+
+	<!-- odom node subscribes to /cmd_vel, publishes /odom-->
+  <node pkg="robocar" type="diffodom" name="odom_node" output="screen">
+	</node>
+
+	<!-- run keyboard teleop?-->
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_node" output="screen">
+	</node>
+
+</launch>

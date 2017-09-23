@@ -23,9 +23,10 @@ double WHEEL_BASE       = 0.1; //meters
 double WHEEL_RADIUS     = 0.01; //meters
 
 //timing stuff
-ros::Time current_time, last_time;
+ros::Time current_time, last_time, cmd_time, last_cmd_time;
 
 //broadcaster stuff
+ros::NodeHandle *nh;
 ros::Publisher odom_pub;
 tf::TransformBroadcaster *odom_broadcaster;
 ros::Publisher pub_velocity_command;
@@ -67,12 +68,11 @@ void initialize_motion(robot_motion_struct &motion)
 void compute_translations(float u_r, float u_l, double dt, robot_motion_struct &motion)
 {
 
-	std::cout << "ul " << u_l << " ur " << u_r << "\n";
+	//std::cout << "ul " << u_l << " ur " << u_r << "\n";
 
 	/// Multiply by radius to go from radians/s to m/s
 	u_l*=WHEEL_RADIUS;
 	u_r*=WHEEL_RADIUS;
-
 
 	/// Calculate linear and angular velocity in robot frame
 	motion.vx = 0.5*(u_l + u_r);
@@ -80,27 +80,58 @@ void compute_translations(float u_r, float u_l, double dt, robot_motion_struct &
 	motion.vth= (u_r - u_l)/WHEEL_BASE;
 
 	/// Propagate the robot using basic odom
-	motion.x += 0.5*(u_l + u_r)*cos(motion.th) * dt;
-	motion.y += 0.5*(u_l + u_r)*sin(motion.th) * dt;
-	motion.th += (u_r - u_l)/WHEEL_BASE * dt;
-	
+	motion.x += motion.vx*cos(motion.th) * dt;
+	motion.y += motion.vx*sin(motion.th) * dt;
+	motion.th += motion.vth * dt;
 }
 
 
-
+//for sending command array down to the arduino
 void send_command(float v_left,float v_right, float time)
 {
+	//v_left and v_right should be angular velocities (rad/s)
 
-    //struct for commands
-    std_msgs::Float32MultiArray command_velocity_val;
-    command_velocity_val.data.resize(ARRSIZE);
+  //struct for commands
+  std_msgs::Float32MultiArray command_velocity_val;
+  command_velocity_val.data.resize(ARRSIZE);
 
-    //motor commands to send
-    command_velocity_val.data[LEFT]  = v_left;
-    command_velocity_val.data[RIGHT] = v_right;
-		command_velocity_val.data[DTIME] = time;
+  //motor commands to send
+  command_velocity_val.data[LEFT]  = v_left;
+  command_velocity_val.data[RIGHT] = v_right;
+	command_velocity_val.data[DTIME] = time;
 
-    pub_velocity_command.publish(command_velocity_val);
+	//publish to arduino
+  pub_velocity_command.publish(command_velocity_val);
+}
+
+
+//subscribe to ros standard cmd_vel
+void sub_cmd_vel(const geometry_msgs::Twist::ConstPtr& msg){
+
+	//time stamps and dt
+	cmd_time = ros::Time::now();
+	ros::Duration durat = cmd_time - last_cmd_time;
+	double dt = durat.toSec();
+
+	//get out the propel and velocity commands
+	double propel = msg->linear.x;
+	double steer = msg->angular.z;
+
+	//now convert these to wheel velocities
+	//math time: need to convert propel and spin into wheel velocities
+  //positive angular velocity meas robot spins counter clockwise, right wheel should be faster
+  double linear_vel_left = propel - ( (steer * WHEEL_BASE) / 2.0 ); //m/s
+  double linear_vel_right = propel + ( (steer * WHEEL_BASE) / 2.0 ); //m/s
+
+	//now compute what our angular velocities should be to accomplish a given linear velocity from wheel diameter
+	double angular_vel_left = linear_vel_left / (WHEEL_RADIUS); //rad/s
+  double angular_vel_right= linear_vel_right / (WHEEL_RADIUS); //rad/s
+
+	//publish out to arduino
+	send_command(angular_vel_left, angular_vel_right, dt);
+
+	//update last time
+	last_cmd_time = cmd_time;
 }
 
 //callbacks for getting velocity data
@@ -154,8 +185,6 @@ void sub_actual(const std_msgs::Float32MultiArray& msg)
     last_time = current_time;
     msg_count++;
 
-	
-		send_command(0.7, 0.7, 0.0);
 }
 
 int main(int argc, char **argv)
@@ -163,13 +192,19 @@ int main(int argc, char **argv)
 	//intialize ROS
 	ros::init(argc, argv, "diffodom");
 
+  nh = new ros::NodeHandle("~");
+
+	//get parameters
+	nh->getParam("WHEEL_BASE", WHEEL_BASE);
+	nh->getParam("WHEEL_RADIUS",WHEEL_RADIUS);
+
 	//Setup all the nodes
-	ros::NodeHandle n;
-	ros::Subscriber sub_velocity_actual = n.subscribe("velocity_actual", 1000, sub_actual);
-	pub_velocity_command = n.advertise<std_msgs::Float32MultiArray>("velocity_command", 1);
+	ros::Subscriber sub_command = nh->subscribe("/cmd_vel", 10, sub_cmd_vel);
+  ros::Subscriber sub_velocity_actual = nh->subscribe("velocity_actual", 10, sub_actual);
+  pub_velocity_command = nh->advertise<std_msgs::Float32MultiArray>("velocity_command", 1);
 
 	//odometry
-	odom_pub = n.advertise<nav_msgs::Odometry>("odom", 1);
+  odom_pub = nh->advertise<nav_msgs::Odometry>("odom", 1);
 	odom_broadcaster = new tf::TransformBroadcaster();	
 
 	//setup the struct to contain ronny info
@@ -178,10 +213,13 @@ int main(int argc, char **argv)
 	//timing stuff
 	current_time = ros::Time::now();
 	last_time = ros::Time::now();
+	cmd_time = ros::Time::now();
+	last_cmd_time = ros::Time::now();
 
-	send_command(0.7, 0.7, 0.0);
+	//initialize commands
+	send_command(0.0, 0.0, 0.0);
 
-
+	//let ros do its thing
   ros::spin();
 
 

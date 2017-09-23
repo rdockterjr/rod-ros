@@ -26,7 +26,7 @@
       <arg name="color_fps"                 value="30" />
     </include>
 
-		<include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+		<include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">rosrun 
       <arg name="manager"                         value="camera_nodelet_manager" />
       <arg name="rgb"                             value="rgb" />
       <arg name="ir"                              value="ir" />
@@ -46,7 +46,18 @@
 
   </group>
 
-	<!-- -->
-  <node pkg="cv_image_filter" type="depthimage_filter" name="depthimage_filter" output="screen"/>
+	<!-- My depth image to laser scan 
+  <node pkg="cv_image_filter" type="depthimage_filter" name="depthimage_filter" output="screen"/> -->
     
+
+	<!-- ROS depth image to laser scan -->
+  <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_filter" output="screen">
+		<remap from="image" to"/image_raw_depth" />
+		<param name="scan_height" value="2" />
+		<param name="range_min" value="0.45" />
+		<param name="range_max" value="9.5" />
+		<param name="output_frame_id" value="camera_link" />
+	</node>
+
+
 </launch>
