@@ -1,6 +1,0 @@
-<launch>
-
-    <node pkg="beginner_tutorials" name="jimmy" type="talker" output="screen"/>
-
-    <node pkg="beginner_tutorials" name="timmy" type="listener" output="screen"/>
-</launch>

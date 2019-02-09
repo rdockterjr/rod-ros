@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- Meta launch file for  all control, sensors , and algorithms-->
+
+	<!-- Include machine control -->
+	<include file="$(find robo_mower)/launch/machine_control.launch">
+	</include>
+
+	<!-- Include sensors -->
+	<include file="$(find robo_mower)/launch/sensor_spawn.launch">
+	</include>
+
+	<!-- Include tf publisher -->
+	<include file="$(find robo_mower)/launch/robo_mower_tf.launch">
+	</include>
+
+
+</launch>

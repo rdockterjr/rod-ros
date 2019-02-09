@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- all sensors-->
+	<!-- Include machine control -->
+	<include file="$(find robo_mower)/launch/phidgets_imu.launch">
+	</include>
+
+
+</launch>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!-- static_transform_publisher 																					    x      y       z       qx qy qz qw parent_frame_id child_frame_id  period_in_ms -->
+	<node pkg="tf" type="static_transform_publisher" name="base_broad"   args=" 0.0     0     0.02        0  0  0  1 base_footprint  base_link       100" />
+	<node pkg="tf" type="static_transform_publisher" name="imu_broad"    args="0.0      0.0   0.21        0  0  0  1 base_link       imu_link        100" />
+	<node pkg="tf" type="static_transform_publisher" name="cam_broad"    args="0.06     0     0.2        0  0  0  1 base_link       camera_link      100" />
+
+</launch>
