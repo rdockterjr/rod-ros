@@ -11,6 +11,7 @@
 
 #define LOOP_TME 100
 #define COUNTS_PER_REV 1024
+#define GEAR_RATIO 17.75
 
 Encoder LeftEnc(11, 12);
 Encoder RightEnc(24, 25);
@@ -29,7 +30,7 @@ void setup() {
   last_time = millis();
   last_left = 0;
   last_right = 0;
-  counts_2_rads = (2.0*M_PI*1000.0)/(float(COUNTS_PER_REV));
+  counts_2_rads = (2.0*M_PI*1000.0)/(float(COUNTS_PER_REV)*GEAR_RATIO);
 }
 
  //compute velocity for each wheel
@@ -42,8 +43,8 @@ void compute_velocities(){
   //time diff
   new_time = millis();
   time_diff = new_time - last_time;
-  //compute veloicities
-  velocity_left = (float(left_diff)/float(time_diff))*counts_2_rads;
+  //compute veloicities (counts)
+  velocity_left = -(float(left_diff)/float(time_diff))*counts_2_rads;
   velocity_right = (float(right_diff)/float(time_diff))*counts_2_rads;
   //update
   last_left = new_left;
@@ -53,7 +54,9 @@ void compute_velocities(){
 
 
 void loop() {
+  //update velocities
   compute_velocities();
+
   Serial.print(velocity_left);
   Serial.print(",");
   Serial.println(velocity_right);

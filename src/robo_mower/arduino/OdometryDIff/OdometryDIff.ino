@@ -8,216 +8,104 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int8.h>
 
-#define ROSSERIAL true
-
 //variables for ros arrays
 #define ARRSIZE 3
 #define LEFT 0
 #define RIGHT 1
 #define TIME 2
 
-//variables for directions
-#define MOTORFORWARD 1
-#define MOTORBACKWARD -1
-#define MOTORSTOP 0
-#define PWM_MAX 254
-#define CHANGE_LIMIT 50
+#define LOOP_TME 100
+#define COUNTS_PER_REV 1024
+#define GEAR_RATIO 17.75 //rough calibration
 
+
+#define ENCODER_USE_INTERRUPTS
 #include <Encoder.h>
+
 
 #ifndef M_PI
   #define M_PI 3.14159265358
 #endif
 
-//PINS FOR L298N
-// LEFT MOTOR A
-int enA = 6;
-int in1 = 7;
-int in2 = 8;
-// RIGHT MOTOR B
-int enB = 11;
-int in3 = 9;
-int in4 = 10;
-
-
 //variables for control
-unsigned long last_received_time;
-unsigned long last_sent_time;
-const int spin_time_ms = 10;
-float dirFlipL = 1.0; //because left wheel is backwards
-float dirFlipR = 1.0; // right wheel goes correct direction
+unsigned long last_cmd_time;
+unsigned long loop_count;
 
 //velocity and timing variables
-float velocity_actual_left = 0.0;
-float velocity_actual_right = 0.0;
-long oldLeft  = 0;
-long oldRight = 0;
-long newLeft, newRight, diffLeft, diffRight;
-float dt_s = 0.0; // seconds
-float dt_us = 0.0; // microseconds
-unsigned long last_timeL, last_timeR;
+long left_diff, right_diff, last_left, last_right, new_left, new_right;
+float velocity_actual_left, velocity_actual_right;
+float velocity_cmd_left, velocity_cmd_right;
+float counts_2_rads;
+unsigned long last_time, new_time, time_diff;
 
 //errors for control loop
-float MotorCommandL,MotorCommandR;
-float Error_Prev_Left, Error_Prev_Right;
-float Error_Now_Left, Error_Now_Right;
-float Setpoint_ActualLeft,Setpoint_ActualRight;
+float motor_command_left, motor_command_right;
+float error_prev_left, error_prev_right;
+unsigned long last_pid_time, new_pid_time;
+float dt_s;
 
 //Specify the ratios and initial tuning parameters, different for each wheel
 float Kp_R = 0.0; //error diff
-float Ki_R = 15.0; //current error
+float Ki_R = 10.0; //current error
 float Kd_R = 0.0;
 float Kp_L = 0.0; //error diff
 float Ki_L = 10.0; //current error
 float Kd_L = 0.0;
-int EncPerRev = 1120; //1920; //32 cpr x 35:1 gear ratio
-float RadPerEnc;
-float us_2_s = 1.0 / 1000000.0;
 
-//Encoders 
-Encoder EncMotorL(2,4);
-Encoder EncMotorR(3,5);
+
+
+//encoder setup
+Encoder LeftEnc(11, 12);
+Encoder RightEnc(24, 25);
 
 
 /////////////////////Wheel Velocity Helper Funcitons //////
 
 
-//set target velocities (rad/s)
-void set_target(float target_left,float target_right)
-{
-  Setpoint_ActualLeft = dirFlipL*target_left; 
-  Setpoint_ActualRight = dirFlipR*target_right;
-}
 
-
-//set direction in L298 chip
-void setDirection(int directionL, int directionR)
-{
-  //Left Motor
-  if(directionL == MOTORFORWARD){
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-  }
-  else if(directionL == MOTORBACKWARD){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-  }
-  else if(directionL == MOTORSTOP){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-  }
-  
-  //Right Motor
-  if(directionR == MOTORFORWARD){
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
-  }
-  else if(directionR == MOTORBACKWARD){
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-  }
-  else if(directionR == MOTORSTOP){
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, LOW);
-  }
-  
-}
-
-//change the enable pins to change direction
-void setMotorPWM(int pwmL, int pwmR)
-{
-  int dirL = MOTORFORWARD;
-  int dirR = MOTORFORWARD;
-  int magL = abs(pwmL);
-  int magR = abs(pwmR);
-
-  //deal with directions
-  if(pwmL < 0){
-    dirL = MOTORBACKWARD;
-  }
-  else if(pwmL == 0){
-    dirL = MOTORSTOP;
-  }
-  if(pwmR < 0){
-    dirR = MOTORBACKWARD;
-  }
-  else if(pwmR == 0){
-    dirR = MOTORSTOP;
-  }
-  setDirection(dirL, dirR);
-  
-  //Left Motor pwm
-  analogWrite(enA, magL);
-  
-  //Right Motor pwm
-  analogWrite(enB, magR);
-}
-
-
-//get current velocity from controllers
-void getVelocity(float &velLeft, float &velRight)
-{
-  //Get new values of the wheel encoders
-  //get current encoder count and delta time
-  newLeft = EncMotorL.read();
-  dt_us=micros()-last_timeL;
-  dt_s = dt_us * us_2_s;
-  last_timeL = micros();
-  //get angular velocity
-  diffLeft = newLeft - oldLeft;
-  velLeft = (float(diffLeft) * RadPerEnc ) / float(dt_s);
-
-  //get current encoder count and delta time
-  newRight = EncMotorR.read();
-  dt_us=micros()-last_timeR;
-  dt_s = dt_us *us_2_s;
-  last_timeR = micros();
-  //get angular velocity
-  diffRight = newRight - oldRight;
-  velRight= (float(diffRight)  * RadPerEnc ) / float(dt_s);
-
-  //Move the new value into the past
-  oldLeft=newLeft;
-  oldRight=newRight;
+ //compute velocity for each wheel
+void compute_velocities(){
+  //encoder diff
+  new_left = LeftEnc.read();
+  new_right = RightEnc.read();
+  left_diff = new_left - last_left;
+  right_diff = new_right - last_right;
+  //time diff
+  new_time = millis();
+  time_diff = new_time - last_time;
+  //compute veloicities (counts)
+  velocity_actual_left = -(float(left_diff)/float(time_diff))*counts_2_rads;
+  velocity_actual_right = (float(right_diff)/float(time_diff))*counts_2_rads;
+  //update
+  last_left = new_left;
+  last_right = new_right;
+  last_time = new_time;
 }
 
 
 //PI control to set motor PWM to correct value to keep desired velocity
-void VelocityController()
+void compute_motor_commands()
 {
+  //get dt
+  new_pid_time = millis();
+  dt_s = float(new_pid_time - last_pid_time)/1000.0;
+  last_pid_time = new_pid_time;
   
-  //get current velocity from controllers
-  getVelocity(velocity_actual_left, velocity_actual_right);
-
   //get error from command velocity to actual
-  Error_Now_Left = Setpoint_ActualLeft - velocity_actual_left ;
-  Error_Now_Right = Setpoint_ActualRight - velocity_actual_right ;
+  float error_now_left = velocity_cmd_left - velocity_actual_left ;
+  float error_now_right = velocity_cmd_right - velocity_actual_right ;
 
   //velocity PID
-  float changeL = Error_Now_Left*Ki_L*dt_s + Kp_L*(Error_Now_Left-Error_Prev_Left);
-  float changeR = Error_Now_Right*Ki_R*dt_s + Kp_R*(Error_Now_Right-Error_Prev_Right);
-  if(changeL>CHANGE_LIMIT){changeL=CHANGE_LIMIT;}
-  if(changeL<-CHANGE_LIMIT){changeL=-CHANGE_LIMIT;}
-  if(changeR>CHANGE_LIMIT){changeR=CHANGE_LIMIT;}
-  if(changeR<-CHANGE_LIMIT){changeR=-CHANGE_LIMIT;}
+  float changeL = error_now_left*Ki_L*dt_s + Kp_L*(error_now_left-error_prev_left);
+  float changeR = error_now_right*Ki_R*dt_s + Kp_R*(error_now_right-error_prev_right);
 
   //Motor commandings in PWM units -255 to +255
-  MotorCommandL+=changeL;
-  MotorCommandR+=changeR;
-  
-  //Avoid integral windup, if you are failing to meet target 
-  //even with max power.
-  if (MotorCommandL > PWM_MAX) {MotorCommandL= PWM_MAX;}
-  if (MotorCommandL <-PWM_MAX) {MotorCommandL=-PWM_MAX;}
-  if (MotorCommandR > PWM_MAX) {MotorCommandR= PWM_MAX;}
-  if (MotorCommandR <-PWM_MAX) {MotorCommandR=-PWM_MAX;}
+  motor_command_left+=changeL;
+  motor_command_right+=changeR;
   
   //Move the new value into the past
-  Error_Prev_Left=Error_Now_Left;
-  Error_Prev_Right=Error_Now_Right;
-
-  //Send the command to the motor!
-  setMotorPWM(int(MotorCommandL), int(MotorCommandR));
+  error_prev_left=error_now_left;
+  error_prev_right=error_now_right;
 }
 
 
@@ -225,78 +113,62 @@ void VelocityController()
 /////////////////////ROS STUFF/////////////////////////////
 
 //Gets called whenever motor node from ros publishes something
-void cmd_message(const std_msgs::Float32MultiArray& msg){
-  //Below ~9 rad/s wont move at all
+void cmd_callback(const std_msgs::Float32MultiArray& msg){
+  velocity_cmd_left = msg.data[LEFT]; 
+  velocity_cmd_right = msg.data[RIGHT];
   
-  
-  //set the wheel velocities (rad/s)
-  set_target(msg.data[LEFT],msg.data[RIGHT]);
-
   //update the last time
-  last_received_time=millis();
+  last_cmd_time=millis();
 }
 
 
 std_msgs::Float32MultiArray Velocity_Out;
 //ros node stuff
 ros::NodeHandle nh;
-ros::Publisher pub_actual("/velocity_actual", &Velocity_Out);
-ros::Subscriber<std_msgs::Float32MultiArray> sub_cmd("/velocity_command", &cmd_message);
+ros::Publisher pub_feedback("/velocity_feedback", &Velocity_Out);
+ros::Subscriber<std_msgs::Float32MultiArray> sub_cmd("/velocity_command", &cmd_callback);
 
 //////////////////////////////Setup//////////////////////////////////////////
 void setup()
 {
-  if(!ROSSERIAL){
-    Serial.begin(9600);
-  }
-  
-  // Some maths
-  RadPerEnc=((2.0*M_PI) / float(EncPerRev));
-  
-  // set all the motor control pins to outputs
-  pinMode(enA, OUTPUT);
-  pinMode(enB, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
   
   //get starting encoder
-  oldLeft = EncMotorL.read();
-  oldRight = EncMotorR.read();
-  last_timeL = micros() - 1;
-  last_timeR = micros() - 1;
+  //initialize timing
+  last_time = millis();
+  last_pid_time = millis();
+  last_left = 0;
+  last_right = 0;
+  counts_2_rads = (2.0*M_PI*1000.0)/(float(COUNTS_PER_REV)*GEAR_RATIO);
 
-  //initialize
+  //initialize variables
   velocity_actual_left = 0.0;
   velocity_actual_right = 0.0;
-  Setpoint_ActualLeft = 0.0;
-  Setpoint_ActualRight = 0.0;
-  MotorCommandL = 0.0;
-  MotorCommandR = 0.0;
+  velocity_cmd_left = 0.0;
+  velocity_cmd_right = 0.0;
+  motor_command_left = 0.0;
+  motor_command_right = 0.0;
+  loop_count = 0;
   
-  //speed init
-  setMotorPWM(0, 0);
 
   //ROS array size
   Velocity_Out.layout.dim = (std_msgs::MultiArrayDimension *)
   malloc(sizeof(std_msgs::MultiArrayDimension) * 1);
-  Velocity_Out.layout.dim[0].label = "Velocity_Out";
+  Velocity_Out.layout.dim[0].label = "velocity_feedback";
   Velocity_Out.layout.dim[0].size = ARRSIZE;
   Velocity_Out.layout.dim[0].stride = 1*ARRSIZE;
   Velocity_Out.layout.data_offset = 0;
   Velocity_Out.data_length = ARRSIZE;
   Velocity_Out.data = (float *)malloc(sizeof(float)*ARRSIZE);
   
-  if(ROSSERIAL){
-    //Initialize ROS stuff
-    nh.initNode();
-    nh.advertise(pub_actual);
-    nh.subscribe(sub_cmd);
-  }
-  
-  last_received_time=millis();
-  last_sent_time=micros();
+
+  //Initialize ROS stuff
+  nh.getHardware()->setBaud(115200);
+  nh.initNode();
+  nh.advertise(pub_feedback);
+  nh.subscribe(sub_cmd);
+
+ 
+  last_cmd_time=millis();
 }
 
 
@@ -304,46 +176,33 @@ void setup()
 void loop()
 {
 
-  /// Find a dt
-  unsigned long current_time = micros();
-  unsigned long dt = current_time - last_sent_time;
-  last_sent_time = current_time;
-  float tempfdt = float(dt * us_2_s);
+  //update velocities
+  compute_velocities();
   
-  /// Run the controller
-  VelocityController();
+  /// Compute Outputs
+  compute_motor_commands();
 
-  if(ROSSERIAL){
-    //Send to ROS Node (rad/s)
-    Velocity_Out.data[RIGHT] = velocity_actual_right;
-    Velocity_Out.data[LEFT ] = velocity_actual_left;
-    Velocity_Out.data[TIME] = tempfdt;
-    pub_actual.publish( &Velocity_Out );
-  }
-  else{
-    if (Serial.available() > 0) {
-      // read the incoming byte:
-      float speedfloat = Serial.parseFloat();
-      // say what you got:
-      Serial.print("SetPoint: ");
-      Serial.println(speedfloat);
-      set_target(speedfloat,speedfloat);
-    }
-    Serial.print(velocity_actual_left);
-    Serial.print(",");
-    Serial.println(velocity_actual_right);
-  }
+  //todo: send motor_command_left, motor_command_right to CUI controllers
 
-  delay(spin_time_ms);
+  //Send to ROS Node (rad/s)
+  Velocity_Out.data[RIGHT] = velocity_actual_right;
+  Velocity_Out.data[LEFT ] = velocity_actual_left;
+  Velocity_Out.data[TIME] = loop_count;
+  pub_feedback.publish( &Velocity_Out );
+
+
+  //delay
+  delay(LOOP_TME);
+  nh.spinOnce();
   
-  if(ROSSERIAL){
-    //check if timeout should trigger
-    unsigned long timeout = millis() - last_received_time;
-    if(timeout>20000ul){
-      /// Tell the motors to shut their faces
-      set_target(0.0,0.0);
-    }
+
+  //check if timeout should trigger
+  unsigned long timeout = millis() - last_cmd_time;
+  if(timeout>20000ul){
+    /// Tell the motors to shut their faces
+    motor_command_left = 0.0;
+    motor_command_right = 0.0;
   }
 
-  //nh.spinOnce();
+  loop_count++;
 }
