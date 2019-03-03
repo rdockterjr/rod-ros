@@ -6,6 +6,9 @@
 #include "Arduino.h"
 #include "Cytron.h"
 
+//pwmpin (red)
+//dirpin (yellow)
+//forwarddir (LOW/HIGH): switches forward direction
 Cytron::Cytron(int pwmpin, int dirpin, int forwarddir)
 {
   _pwmpin = pwmpin;
@@ -13,27 +16,36 @@ Cytron::Cytron(int pwmpin, int dirpin, int forwarddir)
 	_forwarddir = forwarddir;
 }
 
+//setup frequency
+void Cytron::SetFrequency(int hz){
+	analogWriteFrequency(_pwmpin, hz); //find optimal frequency for 10 bit resolution (board dependent)
+}
+
 //setup pins
 void Cytron::Init()
 {
+	//setup freqeuncy and resolution
+	SetFrequency(58593); //optimal frequency for 10 bit
+	analogWriteResolution(10); //0-1023 range
+	//setup pin modes and initialize
   pinMode(_dirpin, OUTPUT);
   pinMode(_pwmpin, OUTPUT);
   digitalWrite(_dirpin, _forwarddir);
   analogWrite(_pwmpin,0);
 }
 
-//percent 0-1000
-void Cytron::Control(int percent)
+//percent -1023 < x < 1023
+void Cytron::Control(int pwm_10bit)
 {
 	//bound it
-	if(percent > 1000){
-		percent = 1000;
+	if(pwm_10bit > MAX_PWM_10_BIT){
+		pwm_10bit = MAX_PWM_10_BIT;
 	}
-	if(percent < - 1000){
-		percent = -1000;
+	if(pwm_10bit < -MAX_PWM_10_BIT){
+		pwm_10bit = -MAX_PWM_10_BIT;
 	}
 	//set direction
-  if(percent > 0){
+  if(pwm_10bit > 0){
     digitalWrite(_dirpin, _forwarddir);
 		_lastdir = _forwarddir;
   }
@@ -41,10 +53,9 @@ void Cytron::Control(int percent)
     digitalWrite(_dirpin, !_forwarddir);
 		_lastdir = !_forwarddir;
   }
-	//compute pwm value and write
-  int pwmval = (float(abs(percent))/1000.0)*255.0;
-  analogWrite(_pwmpin,pwmval);
+	//write pwm value
+  analogWrite(_pwmpin,abs(pwm_10bit));
 	
 	//store
-	_lastpwm = pwmval;
+	_lastpwm = pwm_10bit;
 }
