@@ -1,5 +1,6 @@
 
 #include <ArduinoHardware.h>
+#include <Cytron.h>
 
 #include <ros.h>
 #include <std_msgs/String.h>
@@ -26,6 +27,17 @@
 #ifndef M_PI
   #define M_PI 3.14159265358
 #endif
+
+
+//Pin Assignments
+int pwmpin_left = 35;
+int dirpin_left = 34;
+int pwmpin_right = 38;
+int dirpin_right = 39;
+int enca_left = 11;
+int encb_left = 12;
+int enca_right = 24;
+int encb_right = 25;
 
 //variables for control
 unsigned long last_cmd_time;
@@ -55,12 +67,16 @@ float Kd_L = 0.0;
 
 
 //encoder setup
-Encoder LeftEnc(11, 12);
-Encoder RightEnc(24, 25);
+Encoder LeftEnc(enca_left, encb_left);
+Encoder RightEnc(enca_right, encb_right);
+
+//cytron class
+Cytron left_motor(pwmpin_left, dirpin_left, HIGH);
+Cytron right_motor(pwmpin_right, dirpin_right, LOW);
+
 
 
 /////////////////////Wheel Velocity Helper Funcitons //////
-
 
 
  //compute velocity for each wheel
@@ -148,6 +164,10 @@ void setup()
   motor_command_left = 0.0;
   motor_command_right = 0.0;
   loop_count = 0;
+
+  // set up motor control
+  left_motor.Init();
+  right_motor.Init();
   
 
   //ROS array size
@@ -182,9 +202,11 @@ void loop()
   /// Compute Outputs
   compute_motor_commands();
 
-  //todo: send motor_command_left, motor_command_right to CUI controllers
+  // Send Motor commands
+  left_motor.Control(motor_command_left);
+  right_motor.Control(motor_command_right);
 
-  //Send to ROS Node (rad/s)
+  //Send velocity to ROS Node (rad/s)
   Velocity_Out.data[RIGHT] = velocity_actual_right;
   Velocity_Out.data[LEFT ] = velocity_actual_left;
   Velocity_Out.data[TIME] = loop_count;

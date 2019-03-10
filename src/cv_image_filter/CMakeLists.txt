@@ -12,12 +12,14 @@ project(cv_image_filter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
-  roscpp
-  sensor_msgs
+	cv_bridge
+	image_transport
+	roscpp
+	sensor_msgs
 	image_transport
 	tf
 )
+find_package( OpenCV REQUIRED )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -87,19 +89,19 @@ include_directories(
 # Depth Filter
 add_executable(depthimage_filter src/depthimage_filter.cpp)
 target_link_libraries(
-  depthimage_filter ${catkin_LIBRARIES}
+  depthimage_filter ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 
 # masking
 add_executable(depth_threshold src/depth_threshold.cpp)
 target_link_libraries(
-  depth_threshold ${catkin_LIBRARIES}
+  depth_threshold ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 
 # Color IMage
 add_executable(simple_capture src/simple_capture.cpp)
 target_link_libraries(
-  simple_capture ${catkin_LIBRARIES}
+  simple_capture ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 
 
