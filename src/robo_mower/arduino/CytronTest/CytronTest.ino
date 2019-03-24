@@ -3,10 +3,10 @@
 //https://www.cytron.io/c-93-dc-motor-driver/dc-motor-driver/p-md30c
 //https://docs.google.com/document/d/178uDa3dmoG0ZX859rWUOS2Xyafkd8hSsSET5-ZLXMYQ/view
 
-int pwmpinl = 38;
-int dirpinl = 39;
-int pwmpinr = 35;
-int dirpinr = 34;
+int pwmpinl = 35;
+int dirpinl = 34;
+int pwmpinr = 38;
+int dirpinr = 39;
 
 //cytron class
 Cytron left_motor(pwmpinl, dirpinl, HIGH);

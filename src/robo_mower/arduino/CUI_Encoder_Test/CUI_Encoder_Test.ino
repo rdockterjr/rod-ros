@@ -13,8 +13,8 @@
 #define COUNTS_PER_REV 1024
 #define GEAR_RATIO 17.75
 
-Encoder LeftEnc(11, 12);
-Encoder RightEnc(24, 25);
+Encoder LeftEnc(24, 25);
+Encoder RightEnc(11, 12);
 
 //velocity
 long left_diff, right_diff, last_left, last_right, new_left, new_right;
