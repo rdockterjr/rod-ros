@@ -4,6 +4,7 @@
 #include "nav_msgs/Odometry.h"
 #include "iostream"
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/MultiArrayDimension.h"
 #include "std_msgs/Float32MultiArray.h"
@@ -16,7 +17,7 @@
 #define LEFT  0
 #define RIGHT 1
 #define DTIME 2
-
+#define BLADE 2 //out
 
 //Robot constraints 
 double WHEEL_BASE       = 0.1; //meters
@@ -33,6 +34,7 @@ ros::Publisher pub_velocity_command;
 
 int msg_count=0;
 int avg_msgs=100;
+bool blade_enable = false;
 
 struct motions {
 	float vx;
@@ -67,7 +69,6 @@ void initialize_motion(motions &motion)
 //differential drive equaitons
 void compute_translations(float u_r, float u_l, double dt, motions &motion)
 {
-
     //std::cout << "ul " << u_l << " ur " << u_r << "\n";
 
     // Multiply by radius to go from radians/s to m/s
@@ -98,12 +99,16 @@ void send_command(float v_left,float v_right, float time)
     //motor commands to send
     command_velocity_val.data[LEFT]  = v_left;
     command_velocity_val.data[RIGHT] = v_right;
-    command_velocity_val.data[DTIME] = time;
+    command_velocity_val.data[BLADE] = blade_enable;
 
     //publish to arduino
     pub_velocity_command.publish(command_velocity_val);
 }
 
+
+void sub_blades(const std_msgs::Bool::ConstPtr& msg){
+	blade_enable = msg.data;
+}
 
 //subscribe to ros standard cmd_vel
 void sub_cmd_vel(const geometry_msgs::Twist::ConstPtr& msg){
@@ -201,6 +206,9 @@ int main(int argc, char **argv)
     //Setup all the nodes
     ros::Subscriber sub_command = nh->subscribe("/cmd_vel", 10, sub_cmd_vel);
     ros::Subscriber sub_velocity_actual = nh->subscribe("velocity_feedback", 10, sub_feedback);
+		ros::Subscriber sub_blades = nh->subscribe("blade_enable", 10, sub_blades);
+
+		//pub
     pub_velocity_command = nh->advertise<std_msgs::Float32MultiArray>("velocity_command", 1);
 
     //odometry

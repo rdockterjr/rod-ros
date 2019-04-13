@@ -105,7 +105,7 @@ void compute_motor_commands()
     motor_command_left = 0.0;
   }
   if(velocity_cmd_right < FLOOR_VELOCITY && velocity_cmd_right > -FLOOR_VELOCITY && velocity_actual_right < FLOOR_VELOCITY && velocity_actual_right > -FLOOR_VELOCITY){
-    motor_command_left = 0.0;
+    motor_command_right = 0.0;
   }
   
   //Move the new value into the past
@@ -146,8 +146,10 @@ void loop() {
   compute_motor_commands();
 
   // Send Motor commands
-  left_motor.Control(int(motor_command_left));
-  right_motor.Control(int(motor_command_right));
+  int out_left = motor_command_left;
+  int out_right = motor_command_right;
+  left_motor.Control(out_left);
+  right_motor.Control(out_right);
   
   if (Serial.available() > 0) {
     // read the val

@@ -10,12 +10,15 @@
 #include <std_msgs/Int8.h>
 
 //variables for ros arrays
-#define ARRSIZE 3
+#define ARRSIZE 4
 #define LEFT 0
 #define RIGHT 1
-#define TIME 2
+#define TIME 2 //out
+#define BLADE 2 //in
+#define ESTOP 3
 
-#define LOOP_TME 100
+
+#define LOOP_TME 30
 #define COUNTS_PER_REV 1024
 #define GEAR_RATIO 17.75 //ios calibration
 #define FLOOR_VELOCITY 0.01
@@ -38,6 +41,9 @@ int enca_left = 24;
 int encb_left = 25;
 int enca_right = 11;
 int encb_right = 12;
+int estop_pin = 23;
+int blade_left = 20;
+int blade_right = 21;
 
 //variables for control
 unsigned long last_cmd_time;
@@ -55,6 +61,11 @@ float motor_command_left, motor_command_right;
 float error_prev_left, error_prev_right;
 unsigned long last_pid_time, new_pid_time;
 float dt_s;
+
+//operations
+int estop_press = 0;
+int blade_cmd = 0;
+int cmd_timeout = 0;
 
 //Specify the ratios and initial tuning parameters, different for each wheel
 float Kp_R = 0.0; //error diff
@@ -133,7 +144,7 @@ void compute_motor_commands()
     motor_command_left = 0.0;
   }
   if(velocity_cmd_right < FLOOR_VELOCITY && velocity_cmd_right > -FLOOR_VELOCITY && velocity_actual_right < FLOOR_VELOCITY && velocity_actual_right > -FLOOR_VELOCITY){
-    motor_command_left = 0.0;
+    motor_command_right = 0.0;
   }
   
   //Move the new value into the past
@@ -142,6 +153,18 @@ void compute_motor_commands()
 }
 
 
+//determine blades on off
+void command_cutting_blades(){
+  if(estop_press || cmd_timeout){
+    //turn blades off immediately
+    analogWrite(blade_left, 0);
+    analogWrite(blade_right, 0);
+  }
+  else{
+    analogWrite(blade_left, blade_cmd);
+    analogWrite(blade_right, blade_cmd);
+  }
+}
 
 /////////////////////ROS STUFF/////////////////////////////
 
@@ -149,9 +172,11 @@ void compute_motor_commands()
 void cmd_callback(const std_msgs::Float32MultiArray& msg){
   velocity_cmd_left = msg.data[LEFT]; 
   velocity_cmd_right = msg.data[RIGHT];
+  blade_cmd = int(msg.data[BLADE]);
   
   //update the last time
   last_cmd_time=millis();
+  cmd_timeout = 0;
 }
 
 
@@ -185,7 +210,11 @@ void setup()
   // set up motor control
   left_motor.Init();
   right_motor.Init();
-  
+
+  //pin modes
+  pinMode(estop_pin, INPUT_PULLUP);
+  pinMode(blade_left, OUTPUT);
+  pinMode(blade_right, OUTPUT);
 
   //ROS array size
   Velocity_Out.layout.dim = (std_msgs::MultiArrayDimension *)
@@ -212,6 +241,8 @@ void setup()
 /////////////////////////////////////////Loop//////////////////////////////
 void loop()
 {
+  //check estop
+  estop_press = !digitalRead(estop_pin); //normal = 1, press = 0
 
   //update velocities
   compute_velocities();
@@ -220,13 +251,25 @@ void loop()
   compute_motor_commands();
 
   // Send Motor commands
-  left_motor.Control(motor_command_left);
-  right_motor.Control(motor_command_right);
+  if(estop_press){
+    left_motor.Control(0);
+    right_motor.Control(0);
+  }
+  else{
+    int out_left = motor_command_left;
+    int out_right = motor_command_right;
+    left_motor.Control(out_left);
+    right_motor.Control(out_right);
+  }
+  
+  //send blade commands
+  command_cutting_blades();
 
   //Send velocity to ROS Node (rad/s)
   Velocity_Out.data[RIGHT] = velocity_actual_right;
   Velocity_Out.data[LEFT ] = velocity_actual_left;
-  Velocity_Out.data[TIME] = loop_count;
+  Velocity_Out.data[TIME] = LOOP_TME;
+  Velocity_Out.data[ESTOP] = estop_press;
   pub_feedback.publish( &Velocity_Out );
 
 
@@ -241,6 +284,7 @@ void loop()
     /// Tell the motors to shut their faces
     motor_command_left = 0.0;
     motor_command_right = 0.0;
+    cmd_timeout = 1;
   }
 
   loop_count++;
