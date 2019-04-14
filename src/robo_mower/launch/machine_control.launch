@@ -2,16 +2,18 @@
 
 <launch>
 
+	<!-- Specify robot dimensions as parameters -->
+	<rosparam file="$(find robo_mower)/config/robot_common_params.yaml" command="load" />
+
 	<!-- rosserial node to arduino -->
   <node pkg="rosserial_python" type="serial_node.py" name="rosserial" output="screen">
-		<param name="port" value="/dev/ttyUSB0" />
-		<param name="baud" value="57600" />
+		<param name="port" value="/dev/teensy35" />
+		<param name="baud" value="115200" />
 	</node>
 
 	<!-- odom node subscribes to /cmd_vel, publishes /odom-->
   <node pkg="robo_mower" type="wheel_odometry" name="wheel_odometry" output="screen">
-		<param name="WHEEL_BASE" value="0.3048" />
-  	<param name="WHEEL_RADIUS" value="0.127" />
+		<param name="output_frequency" value="30.0" />
 	</node>
 
 </launch>

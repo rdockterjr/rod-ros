@@ -1,0 +1,25 @@
+#sudo udevadm info -a -p $(udevadm info -q path -n /dev/ttyUSB0)
+#sudo udevadm control --reload-rules && udevadm trigger
+
+ACTION=="add", ATTRS{idVendor}=="09d7", ATTRS{idProduct}=="0100", MODE="777", SYMLINK+="novatel_usb", GROUP="dialout"
+
+ACTION=="add", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="777", SYMLINK+="um7_ft232", GROUP="dialout"
+
+ACTION=="add", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", MODE="777", SYMLINK+="video_pseye"
+
+ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="0cba", MODE="0666", SYMLINK+="vmu931_usb"
+
+ACTION=="add", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="777", SYMLINK+="swift_usb", GROUP="dialout"
+
+SUBSYSTEM=="video4linux", SUBSYSTEMS=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0772", SYMLINK+="lifecam_left"
+SUBSYSTEM=="video4linux", SUBSYSTEMS=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0811", SYMLINK+="lifecam_right"
+
+#phidgets: /opt/ros/indigo/share/phidgets_api/udev/99-phidgets.rules
+SUBSYSTEMS=="usb", ACTION=="add", ATTRS{idVendor}=="06c2", ATTRS{idProduct}=="00[3-a][0-f]", MODE="666"
+
+
+ACTION=="add", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE="777", SYMLINK+="vscomcan"
+
+
+
+
