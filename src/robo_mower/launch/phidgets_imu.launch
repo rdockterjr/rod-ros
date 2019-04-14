@@ -7,8 +7,8 @@
 		<!-- Data rate is ms-->
     <param name="period" value="30"/>
 
-		<!-- Hardcoded
-    <param name="serial_number" value="418742"/>-->
+		<!-- Hardcoded -->
+    <param name="serial_number" value="418742"/>
 
 		<!-- Todo-->
     <!-- <param name="cc_mag_field" value="0.52859"/>
