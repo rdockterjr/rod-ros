@@ -47,6 +47,9 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_executable(wheel_odometry src/wheel_odometry.cpp)
 target_link_libraries(wheel_odometry ${catkin_LIBRARIES})
 
+add_executable(joyop_cmdvel src/joyop_cmdvel.cpp)
+target_link_libraries(joyop_cmdvel ${catkin_LIBRARIES})
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
