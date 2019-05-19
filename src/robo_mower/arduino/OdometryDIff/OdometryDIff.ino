@@ -1,6 +1,7 @@
 
 #include <ArduinoHardware.h>
 #include <Cytron.h>
+#include <ESC.h>
 
 #include <ros.h>
 #include <std_msgs/String.h>
@@ -41,9 +42,9 @@ int enca_left = 24;
 int encb_left = 25;
 int enca_right = 11;
 int encb_right = 12;
-int estop_pin = 23;
-int blade_left = 20;
-int blade_right = 21;
+int estop_pin = 22;
+int blade_left = 21;
+int blade_right = 23;
 
 //variables for control
 unsigned long last_cmd_time;
@@ -82,6 +83,9 @@ Encoder RightEnc(enca_right, encb_right);
 Cytron left_motor(pwmpin_left, dirpin_left, HIGH);
 Cytron right_motor(pwmpin_right, dirpin_right, HIGH);
 
+//brushless motors (blades)
+ESC ESCBlade_Right(blade_right);
+ESC ESCBlade_Left(blade_left);
 
 
 /////////////////////Wheel Velocity Helper Funcitons //////
@@ -157,12 +161,12 @@ void compute_motor_commands()
 void command_cutting_blades(){
   if(estop_press || cmd_timeout){
     //turn blades off immediately
-    analogWrite(blade_left, 0);
-    analogWrite(blade_right, 0);
+    ESCBlade_Right.Control(0);
+    ESCBlade_Left.Control(0);
   }
   else{
-    analogWrite(blade_left, blade_cmd);
-    analogWrite(blade_right, blade_cmd);
+    ESCBlade_Right.Control(blade_cmd);
+    ESCBlade_Left.Control(blade_cmd);
   }
 }
 
@@ -172,7 +176,7 @@ void command_cutting_blades(){
 void cmd_callback(const std_msgs::Float32MultiArray& msg){
   velocity_cmd_left = msg.data[LEFT]; 
   velocity_cmd_right = msg.data[RIGHT];
-  blade_cmd = int(msg.data[BLADE]);
+  blade_cmd = int(msg.data[BLADE]); //0-100
   
   //update the last time
   last_cmd_time=millis();
@@ -213,8 +217,8 @@ void setup()
 
   //pin modes
   pinMode(estop_pin, INPUT_PULLUP);
-  pinMode(blade_left, OUTPUT);
-  pinMode(blade_right, OUTPUT);
+  ESCBlade_Right.Init(); //esc
+  ESCBlade_Left.Init(); //esc
 
   //ROS array size
   Velocity_Out.layout.dim = (std_msgs::MultiArrayDimension *)
