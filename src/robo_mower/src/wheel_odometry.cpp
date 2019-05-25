@@ -121,7 +121,7 @@ void send_command(float v_left,float v_right)
 
 
 void sub_blades(const std_msgs::Int16::ConstPtr& msg){
-	blade_enable = msg->data;
+	blade_enable = msg->data; //0-100
 }
 
 //subscribe to ros standard cmd_vel

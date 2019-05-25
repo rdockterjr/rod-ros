@@ -67,11 +67,16 @@ void joycallback(const sensor_msgs::Joy::ConstPtr& joy_msg){
       std::cout << "Ignoring Debounce " <<  press_duration << "\n";
     }
     else{
-      //either start or stop the recording
+      //either start or stop the blade
       blade_start = ros::Time::now();
       bladeflipflop = !bladeflipflop;
       std_msgs::Int16 blademsg;
-      blademsg.data = bladeflipflop;
+			if(bladeflipflop){
+				blademsg.data = 100;
+			}
+			else{
+      	blademsg.data = 0;
+			}
       blade_pub.publish(blademsg);
     }
   }
@@ -113,7 +118,8 @@ int main (int argc, char** argv)
 
   //debounce
   blade_start = ros::Time::now();
-
+	last_input = ros::Time::now();
+	
   //subscribe to all joint states
   nh->getParam("joy_topic",joyname);
   ros::Subscriber sub_joy = nh->subscribe(joyname,1,joycallback);

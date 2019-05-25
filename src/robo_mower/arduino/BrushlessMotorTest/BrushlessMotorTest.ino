@@ -22,5 +22,7 @@ void loop()
     Serial.println(control_out);
    }
    ESC_Right.Control(control_out) ;     //setting pwm 
+   Serial.print("Servo Val: ");
+   Serial.println(ESC_Right._lastpwm);
    delay(50) ;
 }

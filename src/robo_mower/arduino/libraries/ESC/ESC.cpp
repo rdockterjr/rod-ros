@@ -18,6 +18,9 @@ void ESC::Init()
 	//setup freqeuncy and resolution
 	ESC_Servo.attach(_pwmpin) ;  //Set pwmpin as servo
 	ESC_Servo.write(0) ;
+
+	//analogWriteFrequency(_pwmpin, 58593);//optimal frequency for 10 bit
+	//analogWriteResolution(10); //0-1023 range
 }
 
 //percent 0-100

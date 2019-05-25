@@ -10,6 +10,9 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int8.h>
 
+#define ENCODER_USE_INTERRUPTS
+#include <Encoder.h>
+
 //variables for ros arrays
 #define ARRSIZE 4
 #define LEFT 0
@@ -23,9 +26,6 @@
 #define COUNTS_PER_REV 1024
 #define GEAR_RATIO 17.75 //ios calibration
 #define FLOOR_VELOCITY 0.01
-
-#define ENCODER_USE_INTERRUPTS
-#include <Encoder.h>
 
 
 #ifndef M_PI
@@ -190,6 +190,8 @@ ros::NodeHandle nh;
 ros::Publisher pub_feedback("/velocity_feedback", &Velocity_Out);
 ros::Subscriber<std_msgs::Float32MultiArray> sub_cmd("/velocity_command", &cmd_callback);
 
+
+
 //////////////////////////////Setup//////////////////////////////////////////
 void setup()
 {
@@ -242,7 +244,7 @@ void setup()
 }
 
 
-/////////////////////////////////////////Loop//////////////////////////////
+/////////////////////////////////////Loop/////////////////////////////////
 void loop()
 {
   //check estop

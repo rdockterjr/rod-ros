@@ -23,9 +23,9 @@ class ESC
     ESC(int pwmpin);
     void Init();
     void Control(int pwm_10bit);
+		int _lastpwm;
   private:
     int _pwmpin;
-		int _lastpwm;
 		Servo ESC_Servo;
 };
 
