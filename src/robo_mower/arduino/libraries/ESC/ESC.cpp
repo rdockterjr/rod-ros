@@ -17,10 +17,8 @@ void ESC::Init()
 {
 	//setup freqeuncy and resolution
 	ESC_Servo.attach(_pwmpin) ;  //Set pwmpin as servo
-	ESC_Servo.write(0) ;
+	ESC_Servo.write(90) ; //init the esc by writing half? (180/2=90)
 
-	//analogWriteFrequency(_pwmpin, 58593);//optimal frequency for 10 bit
-	//analogWriteResolution(10); //0-1023 range
 }
 
 //percent 0-100
@@ -34,10 +32,10 @@ void ESC::Control(int percent)
 		percent = MIN_ESC;
 	}
 	
-	//deadband from 0-180 in servo, map 0-100 into 100-180
-	int servo_val = 0;
-	if(percent > 0){
-		servo_val = 100 + int(0.8f*float(percent)); //80-180 range
+	//deadband from 0-90 in servo, map 0-100 into 90-180
+	int servo_val = 90;
+	if(percent > 10){
+		servo_val = 80 + percent; //90-180 range
 	}
 	//set pwm
   ESC_Servo.write(servo_val) ;     //setting pwm

@@ -1,4 +1,7 @@
 #Packages in one command
+#force reinstall if neccesary
+sudo apt-get install ros-kinetic-roscpp ros-kinetic-xmlrpcpp
+
 sudo apt-get install  ros-kinetic-joy ros-kinetic-serial ros-kinetic-imu-filter-madgwick ros-kinetic-phidgets-imu ros-kinetic-phidgets-drivers ros-kinetic-phidgets-api
 
 sudo apt-get install ros-kinetic-usb-cam ros-kinetic-cv-bridge ros-kinetic-costmap-2d ros-kinetic-image-proc ros-kinetic-image-view 

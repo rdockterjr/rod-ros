@@ -32,6 +32,7 @@ std::string joyname = "/joy";
 //scaling
 double propel_scale = 3.0;
 double steer_scale = 1.0;
+int blade_scale = 100; //0-100
 
 //most recent cmd
 double propel_cmd = 0.0;
@@ -72,7 +73,7 @@ void joycallback(const sensor_msgs::Joy::ConstPtr& joy_msg){
       bladeflipflop = !bladeflipflop;
       std_msgs::Int16 blademsg;
 			if(bladeflipflop){
-				blademsg.data = 100;
+				blademsg.data = blade_scale;
 			}
 			else{
       	blademsg.data = 0;
@@ -108,7 +109,7 @@ int main (int argc, char** argv)
   //local scale vals
   nh->getParam("propel_scale",propel_scale);
   nh->getParam("steer_scale",steer_scale);
-	
+	nh->getParam("blade_scale",blade_scale);
 
   //let people know we are publishing out odom and a tf
   cmd_pub = nh->advertise<geometry_msgs::Twist>("/cmd_vel", 10);
