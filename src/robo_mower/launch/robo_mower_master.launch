@@ -12,9 +12,9 @@
 	<include file="$(find robo_mower)/launch/sensor_spawn.launch">
 	</include>
 
-	<!-- Include tf publisher -->
+	<!-- Include tf publisher 
 	<include file="$(find robo_mower)/launch/robo_mower_tf.launch">
-	</include>
+	</include>-->
 
 
 </launch>

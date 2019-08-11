@@ -1,0 +1,13 @@
+<launch>
+
+  <arg name="camera_name" default="pseye"/>
+
+  <node name="pseye" pkg="usb_cam" type="usb_cam_node">
+    <param name="camera_name" value="$(arg camera_name)" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="cam_link" />
+    <param name="video_device" value="/dev/video0" />
+
+  </node>
+
+</launch>

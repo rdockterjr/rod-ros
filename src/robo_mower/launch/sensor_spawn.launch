@@ -3,8 +3,11 @@
 <launch>
 
 	<!-- all sensors-->
-	<!-- Include machine control -->
+	<!-- Include machine control
 	<include file="$(find robo_mower)/launch/phidgets_imu.launch">
+	</include>-->
+
+	<include file="$(find robo_mower)/launch/pseye.launch">
 	</include>
 
 

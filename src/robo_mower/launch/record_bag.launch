@@ -1,0 +1,7 @@
+
+<!-- Record ROS bag-->
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record"
+		args="-o /media/upboard/transferentzia/robo_mower /pseye/camera_info /pseye/image_raw/compressed /blade_enable /cmd_vel /diagnostics /odometry/wheel /tf /velocity_command /velocity_feedback " />
+
+</launch>
