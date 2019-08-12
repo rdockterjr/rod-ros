@@ -9,8 +9,8 @@
 
   <!-- Launch joyop_cmdvel to teleoperate robots-->
   <node name="cmd_vel_joy" type="joyop_cmdvel" pkg="robo_mower" output='screen' >
-		<param name="propel_scale" value="1.0"/>
-		<param name="steer_scale" value="0.5"/>
+		<param name="propel_scale" value="0.5"/>
+		<param name="steer_scale" value="1.0"/>
 		<param name="blade_scale" value="50"/>
 		<param name="output_frequency" value="15"/>
 		<param name="joy_topic" value="/joy"/>

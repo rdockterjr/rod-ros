@@ -1,0 +1,19 @@
+<launch>
+  <!-- Look for qr codes as landmarks. -->
+  <node name="Waterloo" pkg="cv_barcode" type="cv_barcode_node" >
+    
+  </node>
+
+  <!-- EKF that keeps track of the robot's position as well as that of landmarks it has seen. -->
+  <node name="Euston" pkg="slam_ekf_2d" type="slam_ekf_2d_node" >
+    
+  </node>
+
+  <!-- TODO: Dunno how this will actually go. Something to tell it to go charge at least? 
+  -->
+  <node name="StPancras" pkg="rosbag" type="play" args="/media/john/transferentzia/robo_mower_2019-08-10-18-07-58.bag" >
+    
+  </node>
+
+</launch>
+

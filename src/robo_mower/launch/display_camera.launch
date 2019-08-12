@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<!-- Record ROS bag-->
+<launch>
+    <node pkg="cv_barcode" type="cv_rotate" name="cv_rotate" >
+        <remap from="image" to="/pseye/image_raw" />
+    </node>
+
+</launch>
