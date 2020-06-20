@@ -1,0 +1,383 @@
+<?xml version="1.0"?>
+<!-- Revolute-Revolute Manipulator -->
+<robot name="rrbot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants for robot dimensions -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="mass" value="1" />
+  <xacro:property name="chassis_length" value="0.97" /> 
+	<xacro:property name="chassis_width" value="0.4" />
+	
+	<xacro:property name="chassis_stance" value="0.145" />
+	<xacro:property name="chassis_mass" value="3" />
+	<xacro:property name="beam_size" value="0.04" /> 
+	<xacro:property name="beam_mass" value="3" />
+	<xacro:property name="full_chassis_width" value="0.69" /> 
+	<xacro:property name="wheel_track" value="0.49" /> 
+	<xacro:property name="wheel_base" value="0.65" /> 
+  <xacro:property name="wheel_dia" value="0.25" />
+  <xacro:property name="wheel_width" value="0.075" /> 
+	<xacro:property name="wheel_offset" value="0.02" />
+	<xacro:property name="wheel_mass" value="1" />
+	<xacro:property name="caster_size" value="0.05" />
+  <xacro:property name="camera_link" value="0.05" /> 
+	<xacro:property name="camera_height" value="0.1" />
+  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+
+  <!-- Import all Gazebo-customization elements, including Gazebo colors -->
+  <xacro:include filename="$(find maurice_description)/urdf/maurice.gazebo" />
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find maurice_description)/urdf/materials.xacro" />
+	<!-- Import macros -->
+  <xacro:include filename="$(find maurice_description)/urdf/macros.xacro" />
+
+	<!-- Base Footprint (ground) -->
+	<link name="base_footprint" />
+
+	<!-- Base Link -->
+	<link name="base_link" />
+	<joint name="base_footprint_to_base_link" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin rpy="0 0 0" xyz="0 0 ${chassis_stance}"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <!-- Chassis (Main Center) -->
+  <link name="chassis">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${chassis_width} ${beam_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${chassis_width} ${beam_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${chassis_mass}"/>
+			<xacro:box_inertia m="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${beam_size}" />
+    </inertial>
+  </link>
+  <joint name="base_link_to_chassis" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassis"/>
+    <origin rpy="0 0 0" xyz="${wheel_base/2} 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+	<!-- Front Beam -->
+  <link name="front_beam">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${beam_size} ${full_chassis_width} ${beam_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${beam_size} ${full_chassis_width} ${beam_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${beam_mass}"/>
+			<xacro:box_inertia m="${beam_mass}" x="${beam_size}" y="${full_chassis_width}" z="${beam_size}" />
+    </inertial>
+  </link>
+  <joint name="chassis_to_front_beam" type="fixed">
+    <parent link="chassis"/>
+    <child link="front_beam"/>
+    <origin rpy="0 0 0" xyz="${chassis_length/2 - beam_size/2} 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+	  <!-- Rear Beam -->
+  <link name="rear_beam">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${beam_size} ${full_chassis_width} ${beam_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${beam_size} ${full_chassis_width} ${beam_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${beam_mass}"/>
+			<xacro:box_inertia m="${beam_mass}" x="${beam_size}" y="${full_chassis_width}" z="${beam_size}" />
+    </inertial>
+  </link>
+  <joint name="chassis_to_rear_beam" type="fixed">
+    <parent link="chassis"/>
+    <child link="rear_beam"/>
+    <origin rpy="0 0 0" xyz="-${chassis_length/2 - beam_size/2} 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+	<!-- Right Beam -->
+  <link name="right_beam">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${beam_size} ${beam_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${beam_size} ${beam_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${beam_mass}"/>
+			<xacro:box_inertia m="${beam_mass}" x="${chassis_length}" y="${beam_size}" z="${beam_size}" />
+    </inertial>
+  </link>
+  <joint name="chassis_to_right_beam" type="fixed">
+    <parent link="chassis"/>
+    <child link="right_beam"/>
+    <origin rpy="0 0 0" xyz="0 -${full_chassis_width/2 - beam_size/2} 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+	<!-- Left Beam -->
+  <link name="left_beam">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${beam_size} ${beam_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${chassis_length} ${beam_size} ${beam_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${beam_mass}"/>
+			<xacro:box_inertia m="${beam_mass}" x="${chassis_length}" y="${beam_size}" z="${beam_size}" />
+    </inertial>
+  </link>
+  <joint name="chassis_to_left_beam" type="fixed">
+    <parent link="chassis"/>
+    <child link="left_beam"/>
+    <origin rpy="0 0 0" xyz="0 ${full_chassis_width/2 - beam_size/2} 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <!-- right wheel Link -->
+  <link name="right_wheel">
+    <collision>
+      <origin xyz="0 0 0" rpy="-${PI/2} 0 0"/>
+      <geometry>
+				<cylinder length="${wheel_width}" radius="${wheel_dia/2}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="-${PI/2} 0 0"/>
+      <geometry>
+				<cylinder length="${wheel_width}" radius="${wheel_dia/2}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+		<inertial>
+      <origin xyz="0 0 0" rpy="-${PI/2} 0 0"/>
+      <mass value="${wheel_mass}"/>
+			<xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_dia/2}" h="${wheel_width}" />
+    </inertial>
+  </link>
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin rpy="0 0 0" xyz="0 -${wheel_track/2} -${wheel_offset}"/>
+    <axis xyz="0 -1 0"/>
+    <dynamics damping="0.7"/>
+  </joint>
+
+   <!-- left wheel Link -->
+  <link name="left_wheel">
+    <collision>
+      <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+      <geometry>
+				<cylinder length="${wheel_width}" radius="${wheel_dia/2}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+      <geometry>
+				<cylinder length="${wheel_width}" radius="${wheel_dia/2}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+      <mass value="${wheel_mass}"/>
+			<xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_dia/2}" h="${wheel_width}" />
+    </inertial>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin rpy="0 0 0" xyz="0 ${wheel_track/2} -${wheel_offset}"/>
+    <axis xyz="0 -1 0"/>
+    <dynamics damping="0.7"/>
+  </joint>
+
+	<!--Caster Right  -->
+  <link name="caster_right">
+		<collision>
+      <geometry>
+        <sphere radius="${caster_size}"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_size}"/>
+      </geometry>
+      <material name="invisible"/>
+    </visual>
+    
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.01"/>
+			<xacro:sphere_inertia m="0.01" r="${caster_size}" />
+    </inertial>
+  </link>
+  <joint name="base_link_to_caster_right" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_right"/>
+    <origin rpy="0 0 0" xyz="${wheel_base} -${wheel_track/2} -${wheel_dia/2 + wheel_offset - caster_size}"/>
+  </joint>
+
+
+	<!--Caster Left  -->
+  <link name="caster_left">
+		<collision>
+      <geometry>
+        <sphere radius="${caster_size}"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_size}"/>
+      </geometry>
+      <material name="invisible"/>
+    </visual>
+    
+		<inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.01"/>
+			<xacro:sphere_inertia m="0.01" r="${caster_size}" />
+    </inertial>
+  </link>
+  <joint name="base_link_to_caster_left" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_left"/>
+    <origin rpy="0 0 0" xyz="${wheel_base} ${wheel_track/2} -${wheel_dia/2 + wheel_offset - caster_size}"/>
+  </joint>
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+	<box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  <joint name="chassis_to_camera" type="fixed">
+		<parent link="chassis"/>
+    <child link="camera_link"/>
+    <axis xyz="0 1 0" />
+    <origin xyz="${chassis_length/2} 0 ${camera_height}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
+      so that ros and opencv can operate on the camera frame correctly -->
+  <joint name="camera_optical_joint" type="fixed">
+    <!-- these values have to be these values otherwise the gazebo camera image
+        won't be aligned properly with the frame it is supposedly originating from -->
+    <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}"/>
+    <parent link="camera_link"/>
+    <child link="camera_link_optical"/>
+  </joint>
+
+  <link name="camera_link_optical">
+  </link>
+
+  <transmission name="right_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="right_wheel_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="left_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="left_wheel_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+</robot>

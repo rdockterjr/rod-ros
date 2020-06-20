@@ -1,0 +1,22 @@
+<package>
+  <name>maurice_gazebo</name>
+  <version>0.1.0</version>
+  <description>maurice_gazebo</description>
+  <maintainer email="rdockterjr@gmail.com">Rod Dockter</maintainer>
+
+  <license>BSD</license>
+
+  <author email="rdockterjr@gmail.com">Rod Dockter</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>gazebo_plugins</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>gazebo_ros_control</run_depend>
+  <run_depend>maurice_control</run_depend>
+  <run_depend>maurice_description</run_depend>
+  <run_depend>xacro</run_depend>
+
+  <export>
+  </export>
+</package>

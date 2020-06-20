@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>maurice_description</name>
+  <version>0.0.0</version>
+  <description>The maurice_description package</description>
+
+  <maintainer email="rdockterjr@gmail.com">Rod Dockter</maintainer>
+
+  <license>BSD</license>
+
+  <author email="rdockterjr@gmail.com">Rod Dockter</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+	<run_depend>gazebo_ros</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+
+  <export>
+   <gazebo_ros gazebo_media_path="${prefix}" />
+ 	</export>
+</package>
