@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Author: Chad Rockey
  */
 
@@ -50,12 +50,15 @@ private:
   {
     dtl.reset(new DepthImageToLaserScanROS(getNodeHandle(), getPrivateNodeHandle()));
   };
-  
+
   boost::shared_ptr<DepthImageToLaserScanROS> dtl;
 };
 
 }
 
 #include <pluginlib/class_list_macros.h>
+#if ROS_VERSION_MINIMUM(1, 14, 6)
+PLUGINLIB_EXPORT_CLASS(depthimage_to_laserscan::DepthImageToLaserScanNodelet, nodelet::Nodelet)
+#else
 PLUGINLIB_DECLARE_CLASS(depthimage_to_laserscan, DepthImageToLaserScanNodelet, depthimage_to_laserscan::DepthImageToLaserScanNodelet, nodelet::Nodelet);
-
+#endif
