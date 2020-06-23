@@ -5,22 +5,22 @@
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>
   <xacro:property name="mass" value="1" />
-  <xacro:property name="chassis_length" value="0.97" /> 
+  <xacro:property name="chassis_length" value="0.97" />
 	<xacro:property name="chassis_width" value="0.4" />
-	
+
 	<xacro:property name="chassis_stance" value="0.145" />
 	<xacro:property name="chassis_mass" value="3" />
-	<xacro:property name="beam_size" value="0.04" /> 
+	<xacro:property name="beam_size" value="0.04" />
 	<xacro:property name="beam_mass" value="3" />
-	<xacro:property name="full_chassis_width" value="0.69" /> 
-	<xacro:property name="wheel_track" value="0.49" /> 
-	<xacro:property name="wheel_base" value="0.65" /> 
+	<xacro:property name="full_chassis_width" value="0.69" />
+	<xacro:property name="wheel_track" value="0.49" />
+	<xacro:property name="wheel_base" value="0.65" />
   <xacro:property name="wheel_dia" value="0.25" />
-  <xacro:property name="wheel_width" value="0.075" /> 
+  <xacro:property name="wheel_width" value="0.075" />
 	<xacro:property name="wheel_offset" value="0.02" />
 	<xacro:property name="wheel_mass" value="1" />
 	<xacro:property name="caster_size" value="0.05" />
-  <xacro:property name="camera_link" value="0.05" /> 
+  <xacro:property name="camera_link" value="0.05" />
 	<xacro:property name="camera_height" value="0.1" />
   <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
 
@@ -247,12 +247,11 @@
 			<xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_dia/2}" h="${wheel_width}" />
     </inertial>
   </link>
-
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
     <origin rpy="0 0 0" xyz="0 ${wheel_track/2} -${wheel_offset}"/>
-    <axis xyz="0 -1 0"/>
+    <axis xyz="0 1 0"/>
     <dynamics damping="0.7"/>
   </joint>
 
@@ -272,7 +271,7 @@
       </geometry>
       <material name="invisible"/>
     </visual>
-    
+
 		<inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.01"/>
@@ -302,7 +301,7 @@
       </geometry>
       <material name="invisible"/>
     </visual>
-    
+
 		<inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.01"/>
