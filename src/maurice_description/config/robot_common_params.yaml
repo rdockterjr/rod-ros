@@ -1,0 +1,22 @@
+#Calibrated
+wheel_base: 0.4875
+wheel_radius: 0.12812
+odom_ekf: false
+
+#vehicle limits
+max_rot_vel: 0.3
+min_rot_vel: -0.3
+max_lin_vel: 1.0
+min_lin_vel: -1.0
+
+#how long between cmd_vels before we stop
+cmdvel_timeout: 4.0
+
+#IMU settings
+yaw_offset: 0.0
+magnetic_declination_radians: 0.04747296
+
+#GPS covariances
+gps_x_cov: 0.1
+gps_y_cov: 0.1
+

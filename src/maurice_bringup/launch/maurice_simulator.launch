@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+
+<launch>
+
+  <include file="$(find maurice_gazebo)/launch/maurice_world.launch"/>
+
+  <!-- ros_control rrbot launch file -->
+  <include file="$(find maurice_control)/launch/maurice_control.launch"/>
+
+</launch>

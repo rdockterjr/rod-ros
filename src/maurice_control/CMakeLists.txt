@@ -29,6 +29,10 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_executable(diffdrive_cmdvel src/diffdrive_cmdvel.cpp)
 target_link_libraries(diffdrive_cmdvel ${catkin_LIBRARIES})
 
+add_executable(diffdrive_odometry src/diffdrive_odometry.cpp)
+target_link_libraries(diffdrive_odometry ${catkin_LIBRARIES})
+
+
 install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 

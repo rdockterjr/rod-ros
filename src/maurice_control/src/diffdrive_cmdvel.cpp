@@ -17,10 +17,19 @@ std::string g_RightWheelTopic = "/maurice/right_wheel_velocity_controller/comman
 
 //timing stuff
 ros::Time cmd_time, last_cmd_time;
+float cmdvel_timeout = 10.0;
 
 //broadcaster stuff
 ros::NodeHandle *nh;
 ros::Publisher pub_command_left, pub_command_right;
+
+//limits
+double min_lin_vel = -1.0; //meters/second
+double max_lin_vel = 1.0; //meters/second
+double min_rot_vel = -0.3; //-0.1 radians / sec
+double max_rot_vel = 0.3; //0.1 radians / sec
+double angular_vel_left = 0.0;
+double angular_vel_right = 0.0;
 
 unsigned long msg_count=0;
 
@@ -53,6 +62,20 @@ void sub_cmd_vel(const geometry_msgs::Twist::ConstPtr& msg){
 	double propel = msg->linear.x;
 	double steer = msg->angular.z;
 
+  //limits
+  if(propel > max_lin_vel){
+    propel = max_lin_vel;
+  }
+  if(propel < min_lin_vel){
+    propel = min_lin_vel;
+  }
+  if(steer > max_rot_vel){
+    steer = max_rot_vel;
+  }
+  if(steer < min_rot_vel){
+    steer = min_rot_vel;
+  }
+
 	//now convert these to wheel velocities
 	//math time: need to convert propel and spin into wheel velocities
   //positive angular velocity meas robot spins counter clockwise, right wheel should be faster
@@ -60,15 +83,27 @@ void sub_cmd_vel(const geometry_msgs::Twist::ConstPtr& msg){
   double linear_vel_right = propel + ( (steer * g_WheelBase) / 2.0 ); //m/s
 
 	//now compute what our angular velocities should be to accomplish a given linear velocity from wheel diameter
-	double angular_vel_left = linear_vel_left / (g_WheelRadius); //rad/s
-  double angular_vel_right= linear_vel_right / (g_WheelRadius); //rad/s
-
-	//publish out to arduino
-	send_command(angular_vel_left, angular_vel_right);
+	angular_vel_left = linear_vel_left / (g_WheelRadius); //rad/s
+  angular_vel_right= linear_vel_right / (g_WheelRadius); //rad/s
 
 	//update last time
 	last_cmd_time = cmd_time;
 }
+
+//for cmd vel output
+void timercallback(const ros::TimerEvent&)
+{
+	ros::Duration durat = ros::Time::now() - last_cmd_time;
+  double time_since = durat.toSec();
+	if(time_since > cmdvel_timeout){
+		send_command(0.0, 0.0);
+	}
+	else{
+		//velocity commands
+    send_command(angular_vel_left, angular_vel_right);
+	}
+}
+
 
 int main(int argc, char **argv)
 {
@@ -77,17 +112,28 @@ int main(int argc, char **argv)
 
   nh = new ros::NodeHandle("~");
 
+  float output_frequency = 30.0;
+
 	//get parameters
-	nh->getParam("WHEEL_BASE", g_WheelBase);
-	nh->getParam("WHEEL_RADIUS",g_WheelRadius);
-	nh->getParam("CMD_VEL_TOPIC",g_CmdVelTopic);
-	nh->getParam("LEFT_WHEEL_TOPIC",g_LeftWheelTopic);
-	nh->getParam("RIGHT_WHEEL_TOPIC",g_RightWheelTopic);
+	nh->getParam("/wheel_base", g_WheelBase);
+	nh->getParam("/wheel_radius",g_WheelRadius);
+  nh->getParam("/max_rot_vel", max_rot_vel);
+	nh->getParam("/min_rot_vel",min_rot_vel);
+  nh->getParam("/max_lin_vel", max_lin_vel);
+	nh->getParam("/min_lin_vel",min_lin_vel);
+
+	nh->getParam("cmd_vel_topic",g_CmdVelTopic);
+	nh->getParam("left_wheel_topic",g_LeftWheelTopic);
+	nh->getParam("right_wheel_topic",g_RightWheelTopic);
+  nh->getParam("output_frequency",output_frequency);
+  nh->getParam("/cmdvel_timeout", cmdvel_timeout); //seconds
 
 	//Setup all the nodes
 	ros::Subscriber sub_command = nh->subscribe(g_CmdVelTopic, 30, sub_cmd_vel);
   pub_command_left = nh->advertise<std_msgs::Float64>(g_LeftWheelTopic, 1);
 	pub_command_right = nh->advertise<std_msgs::Float64>(g_RightWheelTopic, 1);
+
+  ros::Timer timeroutput = nh->createTimer(ros::Duration(1.0 / output_frequency), timercallback);
 
 	//timing stuff
 	cmd_time = ros::Time::now();

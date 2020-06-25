@@ -3,7 +3,7 @@
 
 <launch>
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find maurice_description)/urdf/maurice.xacro'" /> 
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find maurice_description)/urdf/maurice.xacro'" />
 
   <!-- send fake joint values -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
@@ -16,6 +16,6 @@
   <!-- Show in Rviz   -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find maurice_description)/launch/maurice.rviz"/>
 
-	
+	<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
 
 </launch>
