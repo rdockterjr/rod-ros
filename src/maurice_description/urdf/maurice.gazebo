@@ -19,12 +19,12 @@
   <gazebo reference="base_link">
     <material>Gazebo/Orange</material>
   </gazebo>
-	
+
 	<!-- chassis -->
   <gazebo reference="chassis">
     <material>Gazebo/Grey</material>
   </gazebo>
-	
+
 	<!-- front_beam -->
   <gazebo reference="front_beam">
     <material>Gazebo/Grey</material>
@@ -73,14 +73,8 @@
     <material>Custom/Invisible</material>
   </gazebo>
 
-  <!-- camera_link -->
-  <gazebo reference="camera_link">
-    <mu1>0.2</mu1>
-    <mu2>0.2</mu2>
-    <material>Gazebo/Red</material>
-  </gazebo>
 
-  <!-- hokuyo 
+  <!-- hokuyo
   <gazebo reference="hokuyo_link">
     <sensor type="gpu_ray" name="head_hokuyo_sensor">
       <pose>0 0 0 0 0 0</pose>
@@ -112,6 +106,35 @@
       </plugin>
     </sensor>
   </gazebo>-->
+
+  <!-- IMU link -->
+  <gazebo reference="imu_link">
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <!-- IMU -->
+  <gazebo >
+    <plugin name="imu_plugin" filename="libhector_gazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <bodyName>imu_link</bodyName>
+      <frameId>imu_link</frameId>
+      <topicName>/imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>30.0</updateRate>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+    </plugin>
+  </gazebo>
+
+  <!-- camera_link -->
+  <gazebo reference="camera_link">
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <material>Gazebo/Red</material>
+  </gazebo>
 
   <!-- camera -->
   <gazebo reference="camera_link">

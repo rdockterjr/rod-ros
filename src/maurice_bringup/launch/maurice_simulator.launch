@@ -3,9 +3,16 @@
 
 <launch>
 
+  <!-- gazeo -->
   <include file="$(find maurice_gazebo)/launch/maurice_world.launch"/>
 
-  <!-- ros_control rrbot launch file -->
+  <!-- controllers -->
   <include file="$(find maurice_control)/launch/maurice_control.launch"/>
+
+  <!-- localization -->
+  <include file="$(find maurice_localization)/launch/single_ekf.launch"/>
+
+  <!-- rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find maurice_description)/launch/maurice.rviz"/>
 
 </launch>

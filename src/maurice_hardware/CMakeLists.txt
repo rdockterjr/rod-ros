@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(robo_mower)
+project(maurice_hardware)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 # add_definitions(-std=c++11)
@@ -42,10 +42,10 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(${catkin_INCLUDE_DIRS}) 
+include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(wheel_odometry src/wheel_odometry.cpp)
-target_link_libraries(wheel_odometry ${catkin_LIBRARIES})
+add_executable(maurice_serial_comm src/maurice_serial_comm.cpp)
+target_link_libraries(maurice_serial_comm ${catkin_LIBRARIES})
 
 add_executable(joyop_cmdvel src/joyop_cmdvel.cpp)
 target_link_libraries(joyop_cmdvel ${catkin_LIBRARIES})
@@ -55,6 +55,3 @@ target_link_libraries(joyop_cmdvel ${catkin_LIBRARIES})
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/robo_mower.cpp
 # )
-
-
-

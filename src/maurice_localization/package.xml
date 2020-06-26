@@ -1,0 +1,15 @@
+<package>
+  <name>maurice_localization</name>
+  <version>0.1.0</version>
+  <description>maurice_localization</description>
+  <maintainer email="rdockterjr@gmail.com">Rod Dockter</maintainer>
+
+  <license>BSD</license>
+
+  <author email="rdockterjr@gmail.com">Rod Dockter</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

@@ -21,7 +21,6 @@ ros::Time current_time, last_time;
 
 
 //Ros Topics
-std::string joint_topic = "/maurice/joint_states";
 std::string joint_name_left = "left_wheel_joint";
 std::string joint_name_right = "right_wheel_joint";
 
@@ -89,17 +88,17 @@ void compute_translations(float u_r, float u_l, double dt, motions &motion)
 
 
 //callbacks for getting velocity data
-void sub_feedback(const sensor_msgs::JointState& msg)
+void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 {
     //time stamp
-    current_time = msg.header.stamp;
+    current_time = msg->header.stamp;
 		ros::Duration durat = current_time - last_time;
 	  double dt_s = durat.toSec();
 
 		//extract joint states
-		std::vector<std::string> joint_names = msg.name;
-	  float vel_left = msg.velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_left) - joint_names.begin()];
-		float vel_right = msg.velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_right) - joint_names.begin()];
+		std::vector<std::string> joint_names = msg->name;
+	  float vel_left = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_left) - joint_names.begin()];
+		float vel_right = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_right) - joint_names.begin()];
 
     //compute the odoms
     compute_translations(vel_right, vel_left, dt_s, robot_motion);
@@ -176,6 +175,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "diffdrive_odometry");
 
     nh = new ros::NodeHandle("~");
+
+		std::string joint_topic = "/maurice/joint_states";
 
     //get parameters
     nh->getParam("/wheel_base", wheel_base); //meters

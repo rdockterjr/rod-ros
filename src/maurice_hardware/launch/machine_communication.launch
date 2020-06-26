@@ -3,7 +3,7 @@
 <launch>
 
 	<!-- Specify robot dimensions as parameters -->
-	<rosparam file="$(find robo_mower)/config/robot_common_params.yaml" command="load" />
+	<rosparam file="$(find maurice_hardware)/config/robot_common_params.yaml" command="load" />
 
 	<!-- rosserial node to arduino -->
   <node pkg="rosserial_python" type="serial_node.py" name="rosserial" output="screen">
@@ -12,7 +12,7 @@
 	</node>
 
 	<!-- odom node subscribes to /cmd_vel, publishes /odom-->
-  <node pkg="robo_mower" type="wheel_odometry" name="wheel_odometry" output="screen">
+  <node pkg="maurice_hardware" type="maurice_serial_comm" name="maurice_serial_comm" output="screen">
 		<param name="output_frequency" value="30.0" />
 	</node>
 

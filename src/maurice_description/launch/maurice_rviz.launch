@@ -16,6 +16,5 @@
   <!-- Show in Rviz   -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find maurice_description)/launch/maurice.rviz"/>
 
-	<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
 
 </launch>

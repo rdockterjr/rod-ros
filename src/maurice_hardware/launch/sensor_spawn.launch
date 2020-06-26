@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- all sensors-->
+	<!-- Include machine control
+	<include file="$(find maurice_hardware)/launch/phidgets_imu.launch">
+	</include>-->
+
+	<include file="$(find maurice_hardware)/launch/pseye.launch">
+	</include>
+
+
+</launch>

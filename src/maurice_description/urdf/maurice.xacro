@@ -7,7 +7,6 @@
   <xacro:property name="mass" value="1" />
   <xacro:property name="chassis_length" value="0.97" />
 	<xacro:property name="chassis_width" value="0.4" />
-
 	<xacro:property name="chassis_stance" value="0.145" />
 	<xacro:property name="chassis_mass" value="3" />
 	<xacro:property name="beam_size" value="0.04" />
@@ -20,8 +19,10 @@
 	<xacro:property name="wheel_offset" value="0.02" />
 	<xacro:property name="wheel_mass" value="1" />
 	<xacro:property name="caster_size" value="0.05" />
-  <xacro:property name="camera_link" value="0.05" />
+  <xacro:property name="camera_size" value="0.05" />
 	<xacro:property name="camera_height" value="0.1" />
+  <xacro:property name="imu_offset" value="0.15" />
+  <xacro:property name="imu_size" value="0.02" />
   <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
 
   <!-- Import all Gazebo-customization elements, including Gazebo colors -->
@@ -314,19 +315,50 @@
     <origin rpy="0 0 0" xyz="${wheel_base} ${wheel_track/2} -${wheel_dia/2 + wheel_offset - caster_size}"/>
   </joint>
 
-  <!-- Camera -->
-  <link name="camera_link">
+  <!-- IMU -->
+  <link name="imu_link">
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-				<box size="${camera_link} ${camera_link} ${camera_link}"/>
+				<box size="${imu_size} ${imu_size} ${imu_size}"/>
       </geometry>
     </collision>
 
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-	<box size="${camera_link} ${camera_link} ${camera_link}"/>
+	<box size="${imu_size} ${imu_size} ${imu_size}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  <joint name="base_link_to_imu_link" type="fixed">
+		<parent link="base_link"/>
+    <child link="imu_link"/>
+    <axis xyz="0 0 0" />
+    <origin xyz="-${imu_offset} 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+				<box size="${camera_size} ${camera_size} ${camera_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+	<box size="${camera_size} ${camera_size} ${camera_size}"/>
       </geometry>
       <material name="red"/>
     </visual>

@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <launch>
 	<arg name="joydev" default="/dev/input/js0" />
-	
+
   <!-- Launch joy_node that publishes Joy messages -->
   <node name="joy" type="joy_node" pkg="joy" >
     <param name="dev" value="$(arg joydev)"/>
   </node>
 
   <!-- Launch joyop_cmdvel to teleoperate robots-->
-  <node name="cmd_vel_joy" type="joyop_cmdvel" pkg="robo_mower" output='screen' >
+  <node name="cmd_vel_joy" type="joyop_cmdvel" pkg="maurice_hardware" output='screen' >
 		<param name="propel_scale" value="0.5"/>
 		<param name="steer_scale" value="1.0"/>
 		<param name="blade_scale" value="50"/>
@@ -17,6 +17,3 @@
 	</node>
 
 </launch>
-
-
-

@@ -11,9 +11,6 @@
 //Robot constraints
 double g_WheelBase       = 0.49; //meters
 double g_WheelRadius     = 0.125; //meters
-std::string g_CmdVelTopic = "/cmd_vel";
-std::string g_LeftWheelTopic = "/maurice/left_wheel_velocity_controller/command";
-std::string g_RightWheelTopic = "/maurice/right_wheel_velocity_controller/command";
 
 //timing stuff
 ros::Time cmd_time, last_cmd_time;
@@ -114,6 +111,11 @@ int main(int argc, char **argv)
 
   float output_frequency = 30.0;
 
+  std::string cmd_vel_topic = "/cmd_vel";
+  std::string left_wheel_topic = "/maurice/left_wheel_velocity_controller/command";
+  std::string right_wheel_topic = "/maurice/right_wheel_velocity_controller/command";
+
+
 	//get parameters
 	nh->getParam("/wheel_base", g_WheelBase);
 	nh->getParam("/wheel_radius",g_WheelRadius);
@@ -122,16 +124,16 @@ int main(int argc, char **argv)
   nh->getParam("/max_lin_vel", max_lin_vel);
 	nh->getParam("/min_lin_vel",min_lin_vel);
 
-	nh->getParam("cmd_vel_topic",g_CmdVelTopic);
-	nh->getParam("left_wheel_topic",g_LeftWheelTopic);
-	nh->getParam("right_wheel_topic",g_RightWheelTopic);
+	nh->getParam("cmd_vel_topic",cmd_vel_topic);
+	nh->getParam("left_wheel_topic",left_wheel_topic);
+	nh->getParam("right_wheel_topic",right_wheel_topic);
   nh->getParam("output_frequency",output_frequency);
   nh->getParam("/cmdvel_timeout", cmdvel_timeout); //seconds
 
 	//Setup all the nodes
-	ros::Subscriber sub_command = nh->subscribe(g_CmdVelTopic, 30, sub_cmd_vel);
-  pub_command_left = nh->advertise<std_msgs::Float64>(g_LeftWheelTopic, 1);
-	pub_command_right = nh->advertise<std_msgs::Float64>(g_RightWheelTopic, 1);
+	ros::Subscriber sub_command = nh->subscribe(cmd_vel_topic, 30, sub_cmd_vel);
+  pub_command_left = nh->advertise<std_msgs::Float64>(left_wheel_topic, 1);
+	pub_command_right = nh->advertise<std_msgs::Float64>(right_wheel_topic, 1);
 
   ros::Timer timeroutput = nh->createTimer(ros::Duration(1.0 / output_frequency), timercallback);
 
