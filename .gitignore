@@ -25,6 +25,8 @@ src/robo_mower/arduino/libraries/ros_lib/
 # Ignore generated docs
 *.dox
 *.wikidoc
+*.pdf
+*.gv
 
 # eclipse stuff
 .project

@@ -1,7 +1,7 @@
 #Calibrated
 wheel_base: 0.4875
 wheel_radius: 0.12812
-odom_ekf: false
+odom_ekf: true
 
 #vehicle limits
 max_rot_vel: 0.3
@@ -19,4 +19,3 @@ magnetic_declination_radians: 0.04747296
 #GPS covariances
 gps_x_cov: 0.1
 gps_y_cov: 0.1
-

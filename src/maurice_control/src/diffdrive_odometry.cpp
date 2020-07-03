@@ -15,10 +15,8 @@
 double wheel_base       = 0.4875; //meters
 double wheel_radius     = 0.12812; //meters (80.5 cm circumf)
 
-
 //timing stuff
 ros::Time current_time, last_time;
-
 
 //Ros Topics
 std::string joint_name_left = "left_wheel_joint";
@@ -29,7 +27,7 @@ ros::NodeHandle *nh;
 ros::Publisher odom_pub;
 tf::TransformBroadcaster *odom_broadcaster;
 
-int msg_count=0;
+int msg_count = 0;
 bool odom_ekf = true;
 
 struct motions {
@@ -61,28 +59,25 @@ void initialize_motion(motions &motion)
 //differential drive equaitons
 void compute_translations(float u_r, float u_l, double dt, motions &motion)
 {
-
     // Multiply by radius to go from radians/s to m/s
     u_r = u_r*wheel_radius;
     u_l = u_l*wheel_radius;
 
-		//TAKEN FROM SIEGWART BOOK, PAGE 271
-    //compute distance traveled by each wheel (meters)
-    double delta_s_right = u_r * dt;
-    double delta_s_left = u_l * dt;
+		//TAKEN FROM SIEGWART BOOK
 
 		//compute instantaneous velocities (meters and radians)
-    motion.vs = (delta_s_right + delta_s_left) / 2.0; //delta_s
-    motion.delta_th = (delta_s_right - delta_s_left) / wheel_base; //radians
+    motion.vs = (u_r + u_l) / 2.0; //delta_s
+    motion.delta_th = (u_r - u_l) / wheel_base; //radians
 
     //compute changes in x and y (for position)
-    motion.delta_x = motion.vs*cos(motion.th + (motion.delta_th / 2.0) ); //meters
-    motion.delta_y = motion.vs*sin(motion.th + (motion.delta_th / 2.0) ); //meters
+		float motion_theta = motion.th + ((motion.delta_th*dt) / 2.0);
+    motion.delta_x = motion.vs*cos(motion_theta); //meters
+    motion.delta_y = motion.vs*sin(motion_theta); //meters
 
     // Propagate the robot using basic odom
-    motion.x = motion.x + motion.delta_x;
-    motion.y =  motion.y + motion.delta_y;
-    motion.th = motion.th + motion.delta_th;
+    motion.x = motion.x + motion.delta_x*dt;
+    motion.y =  motion.y + motion.delta_y*dt;
+    motion.th = motion.th + motion.delta_th*dt;
 }
 
 
@@ -138,10 +133,10 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
     odom.twist.covariance[35] = 0.05; //we maybe know about our yaw velocity
 
     //set the velocity (m/s or rad/s) this is all in the child frame, no instantaneous Y velocity
-    odom.twist.twist.linear.x = robot_motion.vs/dt_s; //delta_x;
+    odom.twist.twist.linear.x = robot_motion.vs; //delta_x;
     odom.twist.twist.linear.y = 0.0; //delta_y
     odom.twist.twist.linear.z = 0.0;
-    odom.twist.twist.angular.z = robot_motion.delta_th/dt_s;
+    odom.twist.twist.angular.z = robot_motion.delta_th;
 
     //publish the /odom message
     odom_pub.publish(odom);
