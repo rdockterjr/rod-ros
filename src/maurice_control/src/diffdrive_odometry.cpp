@@ -61,26 +61,26 @@ void initialize_motion(motions &motion)
 //differential drive equaitons
 void compute_translations(float w_r, float w_l, double dt, motions &motion)
 {
-    // Multiply by radius to go from radians/s to m/s
-    w_r = w_r*wheel_radius;
-    w_l = w_l*wheel_radius;
+	// Multiply by radius to go from radians/s to m/s
+	w_r = w_r*wheel_radius;
+	w_l = w_l*wheel_radius;
 
 	//TAKEN FROM SIEGWART BOOK
 
 	//compute instantaneous velocities (meters and radians)
-    motion.v_x = (w_r + w_l) / 2.0; //delta_s
-    motion.v_th = (w_r - w_l) / wheel_base; //radians
+	motion.v_x = (w_r + w_l) / 2.0; //delta_s
+	motion.v_th = (w_r - w_l) / wheel_base; //radians
 
-    //compute changes in x and y (for position)
+	//compute changes in x and y (for position)
 	motion.delta_th = ((motion.v_th*dt) / 2.0);
 	motion.th = motion.th + motion.delta_th;
-    motion.delta_x = motion.v_x*cos(motion.th); //meters
-    motion.delta_y = motion.v_x*sin(motion.th); //meters
+	motion.delta_x = motion.v_x*cos(motion.th); //meters
+	motion.delta_y = motion.v_x*sin(motion.th); //meters
 
-    // Propagate the robot using basic odom
-    motion.x = motion.x + motion.delta_x*dt;
-    motion.y =  motion.y + motion.delta_y*dt;
-    motion.th = motion.th + motion.delta_th;
+	// Propagate the robot using basic odom
+	motion.x = motion.x + motion.delta_x*dt;
+	motion.y =  motion.y + motion.delta_y*dt;
+	motion.th = motion.th + motion.delta_th;
 }
 
 
