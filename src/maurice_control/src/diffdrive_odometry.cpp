@@ -31,7 +31,8 @@ int msg_count = 0;
 bool odom_ekf = true;
 
 struct motions {
-	float vs;
+	float v_x;
+	float v_th;
 	float delta_x;
 	float delta_y;
 	float delta_th;
@@ -46,7 +47,8 @@ motions robot_motion;
 //initialize the struct
 void initialize_motion(motions &motion)
 {
-    motion.vs = 0.0;
+    motion.v_x = 0.0;
+	motion.v_th = 0.0;
     motion.delta_x = 0.0;
     motion.delta_y = 0.0;
     motion.delta_th= 0.0;
@@ -57,27 +59,28 @@ void initialize_motion(motions &motion)
 
 
 //differential drive equaitons
-void compute_translations(float u_r, float u_l, double dt, motions &motion)
+void compute_translations(float w_r, float w_l, double dt, motions &motion)
 {
     // Multiply by radius to go from radians/s to m/s
-    u_r = u_r*wheel_radius;
-    u_l = u_l*wheel_radius;
+    w_r = w_r*wheel_radius;
+    w_l = w_l*wheel_radius;
 
-		//TAKEN FROM SIEGWART BOOK
+	//TAKEN FROM SIEGWART BOOK
 
-		//compute instantaneous velocities (meters and radians)
-    motion.vs = (u_r + u_l) / 2.0; //delta_s
-    motion.delta_th = (u_r - u_l) / wheel_base; //radians
+	//compute instantaneous velocities (meters and radians)
+    motion.v_x = (w_r + w_l) / 2.0; //delta_s
+    motion.v_th = (w_r - w_l) / wheel_base; //radians
 
     //compute changes in x and y (for position)
-		float motion_theta = motion.th + ((motion.delta_th*dt) / 2.0);
-    motion.delta_x = motion.vs*cos(motion_theta); //meters
-    motion.delta_y = motion.vs*sin(motion_theta); //meters
+	motion.delta_th = ((motion.v_th*dt) / 2.0);
+	motion.th = motion.th + motion.delta_th;
+    motion.delta_x = motion.v_x*cos(motion.th); //meters
+    motion.delta_y = motion.v_x*sin(motion.th); //meters
 
     // Propagate the robot using basic odom
     motion.x = motion.x + motion.delta_x*dt;
     motion.y =  motion.y + motion.delta_y*dt;
-    motion.th = motion.th + motion.delta_th*dt;
+    motion.th = motion.th + motion.delta_th;
 }
 
 
@@ -87,13 +90,13 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 {
     //time stamp
     current_time = msg->header.stamp;
-		ros::Duration durat = current_time - last_time;
-	  double dt_s = durat.toSec();
+	ros::Duration durat = current_time - last_time;
+	double dt_s = durat.toSec();
 
-		//extract joint states
-		std::vector<std::string> joint_names = msg->name;
-	  float vel_left = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_left) - joint_names.begin()];
-		float vel_right = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_right) - joint_names.begin()];
+	//extract joint states
+	std::vector<std::string> joint_names = msg->name;
+	float vel_left = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_left) - joint_names.begin()];
+	float vel_right = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_right) - joint_names.begin()];
 
     //compute the odoms
     compute_translations(vel_right, vel_left, dt_s, robot_motion);
@@ -141,26 +144,26 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
     //publish the /odom message
     odom_pub.publish(odom);
 
-		if(!odom_ekf){
-				//dont publish tf for odom when using robot_pose_ekf or robot_localization packages
-        //http://answers.ros.org/question/10511/frames-and-tf-with-robot_pose_ekf/
-        //http://wiki.ros.org/robot_pose_ekf/Tutorials/AddingGpsSensor
+	if(!odom_ekf){
+		//dont publish tf for odom when using robot_pose_ekf or robot_localization packages
+		//http://answers.ros.org/question/10511/frames-and-tf-with-robot_pose_ekf/
+		//http://wiki.ros.org/robot_pose_ekf/Tutorials/AddingGpsSensor
 
-        //publish out the transform from odom to the car
-        geometry_msgs::TransformStamped odom_trans;
-        odom_trans.header.stamp = current_time;
-        odom_trans.header.frame_id = "odom";
-        odom_trans.child_frame_id = "base_footprint"; //"base_footprint"; // "base_link";
-        odom_trans.transform.translation.x = robot_motion.x;
-        odom_trans.transform.translation.y = robot_motion.y;
-        odom_trans.transform.translation.z = 0.0;
-        odom_trans.transform.rotation = odom_quat;
-        //send the /odom to /base_footprint transform
-        odom_broadcaster->sendTransform(odom_trans);
-		}
+		//publish out the transform from odom to the car
+		geometry_msgs::TransformStamped odom_trans;
+		odom_trans.header.stamp = current_time;
+		odom_trans.header.frame_id = "odom";
+		odom_trans.child_frame_id = "base_footprint"; //"base_footprint"; // "base_link";
+		odom_trans.transform.translation.x = robot_motion.x;
+		odom_trans.transform.translation.y = robot_motion.y;
+		odom_trans.transform.translation.z = 0.0;
+		odom_trans.transform.rotation = odom_quat;
+		//send the /odom to /base_footprint transform
+		odom_broadcaster->sendTransform(odom_trans);
+	}
 
     msg_count++;
-		last_time = current_time;
+	last_time = current_time;
 }
 
 
@@ -171,42 +174,42 @@ int main(int argc, char **argv)
 
     nh = new ros::NodeHandle("~");
 
-		std::string joint_topic = "/maurice/joint_states";
+	std::string joint_topic = "/maurice/joint_states";
 
     //get parameters
     nh->getParam("/wheel_base", wheel_base); //meters
     nh->getParam("/wheel_radius",wheel_radius); //meters
-		nh->getParam("/odom_ekf", odom_ekf); // bool
-		nh->getParam("joint_topic", joint_topic); // string
-		nh->getParam("joint_name_left", joint_name_left); // string
-		nh->getParam("joint_name_right", joint_name_right); // string
+	nh->getParam("/odom_ekf", odom_ekf); // bool
+	nh->getParam("joint_topic", joint_topic); // string
+	nh->getParam("joint_name_left", joint_name_left); // string
+	nh->getParam("joint_name_right", joint_name_right); // string
 
-		//setup the struct to contain ronny info
-		initialize_motion(robot_motion);
-		last_time = ros::Time::now();
+	//setup the struct to contain ronny info
+	initialize_motion(robot_motion);
+	last_time = ros::Time::now();
 
     //Setup all the nodes
-		ros::Subscriber sub_velocity_actual = nh->subscribe(joint_topic, 10, sub_feedback);
+	ros::Subscriber sub_velocity_actual = nh->subscribe(joint_topic, 10, sub_feedback);
 
     //odometry
     odom_pub = nh->advertise<nav_msgs::Odometry>("/odometry/wheel", 50);
 
-		if(!odom_ekf){
-    	odom_broadcaster = new tf::TransformBroadcaster();
-			//next we'll publish odom to the car
-      geometry_msgs::TransformStamped odom_trans;
-      odom_trans.header.stamp = ros::Time::now();
-      odom_trans.header.frame_id = "odom";
-      odom_trans.child_frame_id = "base_footprint"; //"base_footprint"; // "base_link";
+	if(!odom_ekf){
+		odom_broadcaster = new tf::TransformBroadcaster();
+		//next we'll publish odom to the car
+		geometry_msgs::TransformStamped odom_trans;
+		odom_trans.header.stamp = ros::Time::now();
+		odom_trans.header.frame_id = "odom";
+		odom_trans.child_frame_id = "base_footprint"; //"base_footprint"; // "base_link";
 
-      odom_trans.transform.translation.x = 0.0;
-      odom_trans.transform.translation.y = 0.0;
-      odom_trans.transform.translation.z = 0.0;
-      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(0.0);
-      odom_trans.transform.rotation = odom_quat;
+		odom_trans.transform.translation.x = 0.0;
+		odom_trans.transform.translation.y = 0.0;
+		odom_trans.transform.translation.z = 0.0;
+		geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(0.0);
+		odom_trans.transform.rotation = odom_quat;
 
-      odom_broadcaster->sendTransform(odom_trans);
-		}
+		odom_broadcaster->sendTransform(odom_trans);
+	}
 
 
     //let ros do its thing
