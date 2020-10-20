@@ -136,10 +136,10 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 	odom.twist.covariance[35] = 0.05; //we maybe know about our yaw velocity
 
 	//set the velocity (m/s or rad/s) this is all in the child frame, no instantaneous Y velocity
-	odom.twist.twist.linear.x = robot_motion.vs; //delta_x;
+	odom.twist.twist.linear.x = robot_motion.v_x; //delta_x;
 	odom.twist.twist.linear.y = 0.0; //delta_y
 	odom.twist.twist.linear.z = 0.0;
-	odom.twist.twist.angular.z = robot_motion.delta_th;
+	odom.twist.twist.angular.z = robot_motion.v_th;
 
 	//publish the /odom message
 	odom_pub.publish(odom);
