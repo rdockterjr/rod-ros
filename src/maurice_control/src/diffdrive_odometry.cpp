@@ -47,14 +47,14 @@ motions robot_motion;
 //initialize the struct
 void initialize_motion(motions &motion)
 {
-    motion.v_x = 0.0;
+	motion.v_x = 0.0;
 	motion.v_th = 0.0;
-    motion.delta_x = 0.0;
-    motion.delta_y = 0.0;
-    motion.delta_th= 0.0;
-    motion.x= 0.0;
-    motion.y= 0.0;
-    motion.th= 0.0;
+	motion.delta_x = 0.0;
+	motion.delta_y = 0.0;
+	motion.delta_th= 0.0;
+	motion.x= 0.0;
+	motion.y= 0.0;
+	motion.th= 0.0;
 }
 
 
@@ -88,8 +88,8 @@ void compute_translations(float w_r, float w_l, double dt, motions &motion)
 //callbacks for getting velocity data
 void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-    //time stamp
-    current_time = msg->header.stamp;
+	//time stamp
+	current_time = msg->header.stamp;
 	ros::Duration durat = current_time - last_time;
 	double dt_s = durat.toSec();
 
@@ -98,51 +98,51 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 	float vel_left = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_left) - joint_names.begin()];
 	float vel_right = msg->velocity[std::find(joint_names.begin(), joint_names.end(), joint_name_right) - joint_names.begin()];
 
-    //compute the odoms
-    compute_translations(vel_right, vel_left, dt_s, robot_motion);
+	//compute the odoms
+	compute_translations(vel_right, vel_left, dt_s, robot_motion);
 
-    //Now setup all the odom nodes
-    //since all odometry is 6DOF we'll need a quaternion created from yaw
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robot_motion.th);
+	//Now setup all the odom nodes
+	//since all odometry is 6DOF we'll need a quaternion created from yaw
+	geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robot_motion.th);
 
 
-    //next, we'll publish the odometry message over ROS
-    nav_msgs::Odometry odom;
-    odom.header.stamp = current_time;
-    odom.header.frame_id = "odom";
-    odom.child_frame_id = "base_footprint";
+	//next, we'll publish the odometry message over ROS
+	nav_msgs::Odometry odom;
+	odom.header.stamp = current_time;
+	odom.header.frame_id = "odom";
+	odom.child_frame_id = "base_footprint";
 
-    //set the position using current odom estimate
-    odom.pose.pose.position.x = robot_motion.x;
-    odom.pose.pose.position.y = robot_motion.y;
-    odom.pose.pose.position.z = 0.0;
-    odom.pose.pose.orientation = odom_quat;
+	//set the position using current odom estimate
+	odom.pose.pose.position.x = robot_motion.x;
+	odom.pose.pose.position.y = robot_motion.y;
+	odom.pose.pose.position.z = 0.0;
+	odom.pose.pose.orientation = odom_quat;
 
-    //set up simple covariances for pose and twist
-    //We need this for robot_pose_ekf
-    //only diagonals (x,y,z) (roll,pitch,yaw)
-    odom.pose.covariance[0]  = 0.5;
-    odom.pose.covariance[7]  = 0.5;
-    odom.pose.covariance[14] = 0.01; //we are really sure we are at Z=0
-    odom.pose.covariance[21] = 0.1; //no knowledge of roll
-    odom.pose.covariance[28] = 0.1; //no knowledge of pitch
-    odom.pose.covariance[35] = 0.1;
+	//set up simple covariances for pose and twist
+	//We need this for robot_pose_ekf
+	//only diagonals (x,y,z) (roll,pitch,yaw)
+	odom.pose.covariance[0]  = 0.5;
+	odom.pose.covariance[7]  = 0.5;
+	odom.pose.covariance[14] = 0.01; //we are really sure we are at Z=0
+	odom.pose.covariance[21] = 0.1; //no knowledge of roll
+	odom.pose.covariance[28] = 0.1; //no knowledge of pitch
+	odom.pose.covariance[35] = 0.1;
 
-    odom.twist.covariance[0]  = 0.05; //yes instant x velocity
-    odom.twist.covariance[7]  = 0.05; // no instant Y velocity (we're sure)
-    odom.twist.covariance[14] = 0.01; // no instant Z velocity (we're sure)
-    odom.twist.covariance[21] = 0.01; //no knowledge of roll velocity
-    odom.twist.covariance[28] = 0.01; //no knowledge of pitch velocity
-    odom.twist.covariance[35] = 0.05; //we maybe know about our yaw velocity
+	odom.twist.covariance[0]  = 0.05; //yes instant x velocity
+	odom.twist.covariance[7]  = 0.05; // no instant Y velocity (we're sure)
+	odom.twist.covariance[14] = 0.01; // no instant Z velocity (we're sure)
+	odom.twist.covariance[21] = 0.01; //no knowledge of roll velocity
+	odom.twist.covariance[28] = 0.01; //no knowledge of pitch velocity
+	odom.twist.covariance[35] = 0.05; //we maybe know about our yaw velocity
 
-    //set the velocity (m/s or rad/s) this is all in the child frame, no instantaneous Y velocity
-    odom.twist.twist.linear.x = robot_motion.vs; //delta_x;
-    odom.twist.twist.linear.y = 0.0; //delta_y
-    odom.twist.twist.linear.z = 0.0;
-    odom.twist.twist.angular.z = robot_motion.delta_th;
+	//set the velocity (m/s or rad/s) this is all in the child frame, no instantaneous Y velocity
+	odom.twist.twist.linear.x = robot_motion.vs; //delta_x;
+	odom.twist.twist.linear.y = 0.0; //delta_y
+	odom.twist.twist.linear.z = 0.0;
+	odom.twist.twist.angular.z = robot_motion.delta_th;
 
-    //publish the /odom message
-    odom_pub.publish(odom);
+	//publish the /odom message
+	odom_pub.publish(odom);
 
 	if(!odom_ekf){
 		//dont publish tf for odom when using robot_pose_ekf or robot_localization packages
@@ -162,23 +162,23 @@ void sub_feedback(const sensor_msgs::JointState::ConstPtr& msg)
 		odom_broadcaster->sendTransform(odom_trans);
 	}
 
-    msg_count++;
+	msg_count++;
 	last_time = current_time;
 }
 
 
 int main(int argc, char **argv)
 {
-    //intialize ROS
-    ros::init(argc, argv, "diffdrive_odometry");
+	//intialize ROS
+	ros::init(argc, argv, "diffdrive_odometry");
 
-    nh = new ros::NodeHandle("~");
+	nh = new ros::NodeHandle("~");
 
 	std::string joint_topic = "/maurice/joint_states";
 
-    //get parameters
-    nh->getParam("/wheel_base", wheel_base); //meters
-    nh->getParam("/wheel_radius",wheel_radius); //meters
+	//get parameters
+	nh->getParam("/wheel_base", wheel_base); //meters
+	nh->getParam("/wheel_radius",wheel_radius); //meters
 	nh->getParam("/odom_ekf", odom_ekf); // bool
 	nh->getParam("joint_topic", joint_topic); // string
 	nh->getParam("joint_name_left", joint_name_left); // string
@@ -188,11 +188,11 @@ int main(int argc, char **argv)
 	initialize_motion(robot_motion);
 	last_time = ros::Time::now();
 
-    //Setup all the nodes
+	//Setup all the nodes
 	ros::Subscriber sub_velocity_actual = nh->subscribe(joint_topic, 10, sub_feedback);
 
-    //odometry
-    odom_pub = nh->advertise<nav_msgs::Odometry>("/odometry/wheel", 50);
+	//odometry
+	odom_pub = nh->advertise<nav_msgs::Odometry>("/odometry/wheel", 50);
 
 	if(!odom_ekf){
 		odom_broadcaster = new tf::TransformBroadcaster();
