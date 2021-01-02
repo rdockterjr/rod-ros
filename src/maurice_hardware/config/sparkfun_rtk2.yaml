@@ -1,5 +1,7 @@
 device: /dev/ttyACM0
 frame_id: gps
-uart1:
+usb:
   baudrate: 38400
+  in: 5                    # RTCM 3
+  out: 0                   # UBX
 config_on_startup: false
