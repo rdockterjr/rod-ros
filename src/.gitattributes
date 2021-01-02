@@ -1,1 +1,1 @@
-maurice_hardware/config/rtkrcv.conf filter=git-crypt diff=git-crypt
+maurice_hardware/scripts/corrections.sh filter=git-crypt diff=git-crypt

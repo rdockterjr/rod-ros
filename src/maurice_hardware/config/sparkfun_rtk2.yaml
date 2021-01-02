@@ -1,5 +1,7 @@
 device: /dev/ttyACM0
 frame_id: gps
+rate: 4                     # in Hz
+nav_rate: 4
 usb:
   baudrate: 38400
   in: 5                    # RTCM 3
