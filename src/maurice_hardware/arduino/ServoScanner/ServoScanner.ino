@@ -5,16 +5,23 @@
 
 
 // Globals
-LIDARLite lidarLite;
+LIDARLite lidarLite; //black=gnd, red=5v, blue=sda (A4), green=scl (A5)
 Servo servoscan;  // create servo object to control a servo
-#define servopin 2 //d2
+#define servopin 3 //d3
+
 int angle = 0;    // variable to store the servo position
-int step_angle = 1; // 0->180->0 repeat
-int angle_offset = 0; // hard coded, uncalibrated
+int center_angle = 98; //offset (calibrated)
+int angle_fov = 120; //FOV
+
+int step_angle = 2; // min>angle>max repeat
+bool forward = true;
+
+int min_angle = center_angle - (angle_fov/2);
+int max_angle = center_angle + (angle_fov/2);
 
 void setup()
 {
-  Serial.begin(9600); // Todo: make serial to teensy
+  Serial.begin(38400); // Todo: make serial to teensy
 
   //setup servo
   servoscan.attach(servopin);
@@ -24,9 +31,9 @@ void setup()
   lidarLite.configure(0); // Change this number to try out alternate configurations
 
   //initialize
-  angle = 90;
+  angle = center_angle;
   servoscan.write(angle); 
-  delay(15);
+  delay(500);
 }
 
 void loop()
@@ -35,27 +42,32 @@ void loop()
 
   // Increment scan angle
   servoscan.write(angle); 
-  delay(15); //wait to arrive before scanning
+  delay(50); //wait to arrive before scanning
 
   // At the beginning of scan use bias correction
-  if ( angle == 0 || angle == 180) {
+  if (forward && angle >= max_angle) {
+    dist = lidarLite.distance();      // With bias correction
+  } else if (!forward && angle <= min_angle) {
     dist = lidarLite.distance();      // With bias correction
   } else {
     dist = lidarLite.distance(false); // Without bias correction
   }
 
   // Display distance
-  int true_angle = angle + angle_offset;
-  Serial.print(true_angle);
+  int true_angle = angle - center_angle;
+  
+  Serial.print(dist);
   Serial.print(",");
-  Serial.println(dist);
+  Serial.println(true_angle);
 
   //angle update
-  if(angle == 180){
-    step_angle = -1;
+  if(forward && angle >= max_angle){
+    step_angle = -2;
+    forward = false;
   }
-  if(angle == 0){
-    step_angle = 1;
+  if(!forward && angle <= min_angle){
+    step_angle = 2;
+    forward = true;
   }
   angle += step_angle;
 }
